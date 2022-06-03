@@ -60,6 +60,10 @@ Texture2D		RenderTargetRGB32F; 	//32 bit hdr format without alpha
 	UI_FLOAT_FINE(fADOF_ShapeRadius_set,  	"Bokeh Size",  					0.0, 100.0, 20.0, 0.1)
 	UI_INT(fADOF_BokehIntensity_int,		"Bokeh Intensity",  			0, 100, 50)
 	UI_FLOAT(fADOF_ShapeChromaAmount,		"CA Amount",  				   -1.0, 1.0, 0.0)
+	UI_WHITESPACE(2)
+	UI_BOOL(LensType,						"Optical Vignette",	false)
+	UI_FLOAT_FINE(fADOF_ShapeVignetteCurve, "Vingette Curve",  				0.5, 2.5, 0.75, 0.01)
+	UI_FLOAT_FINE(fADOF_ShapeVignetteAmount,"Vingette Amount",  			0.0, 2.0, 1.00, 0.01)
 
     #define fADOF_AutofocusCenter float2(0.5, 0.5)
     #define iADOF_AutofocusSamples 6
@@ -75,7 +79,7 @@ Texture2D		RenderTargetRGB32F; 	//32 bit hdr format without alpha
     #define fADOF_ShapeCurvatureAmount 0.15
     #define fADOF_ShapeRotation 66
     #define fADOF_ShapeAnamorphRatio 1.0
-    #define fADOF_SmootheningAmount 1
+    #define fADOF_SmootheningAmount 0
 	#define iADOF_ShapeChromaMode 2
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
