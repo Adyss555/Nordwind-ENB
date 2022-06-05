@@ -68,6 +68,13 @@ UI_FLOAT(SharpenigOffset,       "| Sharpening Offset",          0.2, 2.0, 1.0)
 UI_FLOAT(SharpeningStrength,    "| Sharpening Strength",      	0.2, 3.0, 1.0)
 UI_FLOAT(SharpDistance,         "| Sharpening Fadeout",			0.1, 15.0, 3.0)
 UI_BOOL(ignoreSkin,             "| Ignore Skin",                false)
+UI_WHITESPACE(3)
+UI_MESSAGE(4,                   "|===== Skin =====")
+UI_BOOL(enableSkinEdit,         "| Enable Skin Edit",           false)
+UI_FLOAT(skinGamma,             "| Skin Gamma",			        0.2, 2.2, 1.0)
+UI_INT(skinTone,                "| Skin Tone",                  1.0, 100.0, 50.0)
+UI_FLOAT3(skinTint,             "| Skin Tint",                  0.5, 0.5, 0.5)
+UI_FLOAT(skinCut,               "| Effect fade distance",       0.0, 10.0, 1.0)
 
 
 //==================================================//
@@ -85,6 +92,14 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
     float3 color        = TextureOriginal.Sample(PointSampler, coord);
     float4 ambient      = TextureMask.Sample(LinearSampler, coord);
     float  depth        = getLinearizedDepth(coord);
+    float  skinned      = floor(1 - ambient.a) * saturate(1 - smoothstep(0.0, skinCut * 0.03, depth)); // Floor here gets rid of "skinned" objects and reveals only Skin for the most part
+
+    // Skin Color edits
+    float3 skinColor    = color * skinned;
+           skinColor    = lerp(pow(skinColor, float3(1.0, 0.95, 0.9)), pow(skinColor, float3(0.85, 0.9, 1.0)), skinTone *  0.01);
+           skinColor    = pow(skinColor, skinGamma);
+           skinColor    = skinColor * (0.5 + skinTint);
+           color        = lerp(color, skinColor / (1 + color), skinned * enableSkinEdit);
 
     // Calc Shadows and Hightlights and edit them
     float  Lo           = ShadowRange - saturate(min3(color));

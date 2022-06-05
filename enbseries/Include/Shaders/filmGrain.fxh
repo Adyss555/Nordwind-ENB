@@ -195,7 +195,7 @@ float3 GrainPass(float2 position, float3 col)
 
     // Desaturate Grain if Using B&W //////////
     grey = dot(grey, lumcoeff);
-    col = BlendSoftLightf(col, grey);
+    col = BlendSoftLight(col, grey);
 
     return float4(col,1.0);
 }
