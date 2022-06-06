@@ -39,6 +39,7 @@ Texture2D		RenderTargetRGB32F;  //32 bit hdr format without alpha
 #include "Include/Shared/ReforgedUI.fxh"
 #include "Include/Shared/Conversions.fxh"
 #include "Include/Shared/BlendingModes.fxh"
+#include "Include/Shared/graphing.fxh"
 
 //==================================================//
 // UI                                       		//
@@ -87,42 +88,43 @@ UI_FLOAT(contrast,                  "|  Contrast",	             	-1.0, 1.0, 0.0)
 UI_FLOAT(inputGamma,                "|  Gamma",	             		0.0, 2.2, 1.0)
 UI_FLOAT(inputWhitePoint,           "|  Level Input Whitepoint",	0.0, 2.0, 1.0)
 UI_FLOAT(inputBlackPoint,           "|  Level Input Blackpoint",	0.0, 2.0, 0.0)
-UI_FLOAT(outputWhitePoint,          "|  Level Outout Whitepoint",	0.0, 2.0, 1.0)
+UI_FLOAT(outputWhitePoint,          "|  Level Output Whitepoint",	0.0, 2.0, 1.0)
 UI_FLOAT(outputBlackPoint,          "|  Level Output Blackpoint",	0.0, 2.0, 0.0)
 UI_WHITESPACE(8)
+UI_BOOL(showCurveGraph,             "|=== Show Curve Graph ===",           false)
 UI_MESSAGE(6,                       "| Luminance Curve:")
 UI_FLOAT(CurveBlendL,               "|  Luma Curve Power",     		0.0, 1.0, 0.0)
-UI_FLOAT(LSP,                       "|  Luma Curve Startpoint",		0.0, 1.0, 0.0)
-UI_FLOAT(LCP1,                      "|  Luma Curve Lower End",		0.0, 10.0, 0.5)
-UI_FLOAT(LCP2,                      "|  Luma Curve Upper End", 		0.0, 10.0, 0.5)
-UI_FLOAT(LEP,                       "|  Luma Curve End Point",    	0.0, 1.0, 1.0)
+UI_FLOAT(LSP,                       "|  Luma Curve Startpoint",		-1.0, 1.0, 0.0)
+UI_FLOAT(LCP1,                      "|  Luma Curve Lower End",		-5.0, 5.0, 0.35)
+UI_FLOAT(LCP2,                      "|  Luma Curve Upper End", 		-5.0, 5.0, 0.65)
+UI_FLOAT(LEP,                       "|  Luma Curve End Point",    	0.0, 2.0, 1.0)
 UI_WHITESPACE(9)
 UI_MESSAGE(7,                       "| Red Curve:")
 UI_FLOAT(CurveBlendR,               "|  Red Curve Power",         	0.0, 1.0, 0.0)
-UI_FLOAT(RSP,                       "|  Red Curve Startpoint",   	0.0, 1.0, 0.0)
-UI_FLOAT(RCP1,                      "|  Red Curve Lower End", 		0.0, 10.0, 0.5)
-UI_FLOAT(RCP2,                      "|  Red Curve Upper End", 		0.0, 10.0, 0.5)
-UI_FLOAT(REP,                       "|  Red Curve End Point",     	0.0, 1.0, 1.0)
+UI_FLOAT(RSP,                       "|  Red Curve Startpoint",   	-1.0, 1.0, 0.0)
+UI_FLOAT(RCP1,                      "|  Red Curve Lower End", 		-5.0, 5.0, 0.35)
+UI_FLOAT(RCP2,                      "|  Red Curve Upper End", 		-5.0, 5.0, 0.65)
+UI_FLOAT(REP,                       "|  Red Curve End Point",     	0.0, 2.0, 1.0)
 UI_WHITESPACE(10)
 UI_MESSAGE(8,                      	"| Green Curve:")
 UI_FLOAT(CurveBlendG,               "|  Green Curve Power",        	0.0, 1.0, 0.0)
-UI_FLOAT(GSP,                       "|  Green Curve Startpoint",  	0.0, 1.0, 0.0)
-UI_FLOAT(GCP1,                      "|  Green Curve Lower End",   	0.0, 10.0, 0.5)
-UI_FLOAT(GCP2,                      "|  Green Curve Upper End",   	0.0, 10.0, 0.5)
-UI_FLOAT(GEP,                       "|  Green Curve End Point",    	0.0, 1.0, 1.0)
+UI_FLOAT(GSP,                       "|  Green Curve Startpoint",  	-1.0, 1.0, 0.0)
+UI_FLOAT(GCP1,                      "|  Green Curve Lower End",   	-5.0, 5.0, 0.35)
+UI_FLOAT(GCP2,                      "|  Green Curve Upper End",   	-5.0, 5.0, 0.65)
+UI_FLOAT(GEP,                       "|  Green Curve End Point",    	0.0, 2.0, 1.0)
 UI_WHITESPACE(11)
 UI_MESSAGE(9,                      	"| Blue Curve:")
 UI_FLOAT(CurveBlendB,               "|  Blue Curve Power",       	0.0, 1.0, 0.0)
-UI_FLOAT(BSP,                       "|  Blue Curve Startpoint",  	0.0, 1.0, 0.0)
-UI_FLOAT(BCP1,                      "|  Blue Curve Lower End",  	0.0, 10.0, 0.5)
-UI_FLOAT(BCP2,                      "|  Blue Curve Upper End",   	0.0, 10.0, 0.5)
-UI_FLOAT(BEP,                       "|  Blue Curve End Point",   	0.0, 1.0, 1.0)
+UI_FLOAT(BSP,                       "|  Blue Curve Startpoint",  	-1.0, 1.0, 0.0)
+UI_FLOAT(BCP1,                      "|  Blue Curve Lower End",  	-5.0, 5.0, 0.35)
+UI_FLOAT(BCP2,                      "|  Blue Curve Upper End",   	-5.0, 5.0, 0.65)
+UI_FLOAT(BEP,                       "|  Blue Curve End Point",   	0.0, 2.0, 1.0)
 UI_WHITESPACE(12)
 UI_MESSAGE(10,                      "| Channel Isolation:")
 UI_FLOAT_FINE(hueMid ,           	"|  Hue Selection ",          	0.0, 1.0, 0.0, 0.001)
 UI_FLOAT(hueRange  ,          	    "|  Hue Range ",               	0.0, 1.0, 0.1)
 UI_FLOAT(satLimit ,        			"|  Saturation Limit",         	0.0, 1.0, 1.0)
-UI_FLOAT(fxcolorMix  ,        	    "|  Mix Isolated Color",       	0.0, 1.0, 0.2)
+UI_FLOAT(fxcolorMix  ,        	    "|  Mix Isolated Color",       	0.0, 1.0, 0.1)
 
 
 //==================================================//
@@ -168,7 +170,7 @@ float3 PS_Color(VS_OUTPUT IN) : SV_Target
     return Color;
 }
 
-float4 PS_PostFX(VS_OUTPUT IN) : SV_Target
+float4 PS_PostFX(VS_OUTPUT IN, float4 v0 : SV_Position0) : SV_Target
 {
     float2 coord    = IN.txcoord.xy;
     float4 Color    = TextureColor.Sample(PointSampler, coord);
@@ -184,6 +186,21 @@ float4 PS_PostFX(VS_OUTPUT IN) : SV_Target
     //Letterboxes
     if(enableLetterbox)
     Color   = applyLetterbox(Color, getLinearizedDepth(coord), coord);
+
+	// Draw Debug Grapth
+	if(showCurveGraph)
+	{
+		Color.a			= 1.0; // needed for this to work
+		GraphStruct g 	= graphNew(float2(Resolution.x - 512, 3), float2(512, 512), v0.xy, float2(6, 6));
+		g.drop_shadow 	= 0.9;
+	    g.roundness 	= 10.0;
+		graphAddPlot(g, Curve(g.uv.x, float4(RSP, RCP1, RCP2, REP)), float3(1.0, 0.0, 0.0)); // R
+		graphAddPlot(g, Curve(g.uv.x, float4(GSP, GCP1, GCP2, GEP)), float3(0.0, 1.0, 0.0)); // G
+		graphAddPlot(g, Curve(g.uv.x, float4(BSP, BCP1, BCP2, BEP)), float3(0.0, 0.0, 1.0)); // B
+		graphAddPlot(g, Curve(g.uv.x, float4(LSP, LCP1, LCP2, LEP)), float3(1.0, 1.0, 1.0)); // L
+		graphDraw(g, Color);
+	}
+
 
     return Color;
 }
