@@ -71,10 +71,42 @@ UI_BOOL(showLens,                   " Show Lens Texture",       false)
 UI_BOOL(showAdapt,                  " Show Adaptation Level",   false)
 UI_BOOL(agccTint,                   " Enable AGCC Tinting ",    false)
 UI_BOOL(agccFade,                   " Enable AGCC Fade",        false)
-
+UI_BOOL(useFuji,                    " Use Fujifilm F LOG",      false)
 //==================================================//
 // Functions                                        //
 //==================================================//
+
+float pcvLum(in float3 color)
+{
+    return sqrt((color.x*color.x*0.212395f)+(color.y*color.y*0.701049f)+(color.z*color.z*0.086556f));
+}
+
+float3 fujiFLog(float3 color, float pcvLum)
+{
+    float a = 0.555556;
+    float b = 0.009468;
+    float c = 0.344676;
+    float d = 0.790453;
+    float e = 8.735631;
+    float f = 0.092864;
+    float cut1 = 0.00089;
+    float cut2 = 0.100537775223865; //prob can cut precision on this
+
+    //color = mul(color, gamut);
+
+    // Calculate the LOG tonemapping
+    if(pcvLum >= cut1)
+    {
+        color = c * log10(a * color + b) + d;
+    }
+    else
+    {
+        color = e * color + f;
+    }
+
+    return color;
+}
+
 float3 adyLOG(float3 x, float logGamma)
 {
     return max(log(x + 1) / pow(x, 1 / logGamma), 0.001);
@@ -117,15 +149,26 @@ float3 ChangeWhiteBalance(float3 Color, float Luma, float colorTempK)
 }
 
 // Frostbyte style tonemap by Sandvich http://enbseries.enbdev.com/forum/viewtopic.php?f=7&t=6239&sid=affec87216d29e0bd1a04bc515552bc6
-float3 frostbyteTonemap(float3 Color, float agcc_contrast, float agcc_saturation)
+float3 frostbyteTonemap(float3 Color, float agcc_contrast, float agcc_saturation, float adaptation)
 {
     float3 ictcp        = rgb2ictcp(Color);
     float  saturation   = pow(smoothstep(1.0, 1.0 - Desaturation, ictcp.x), 1.3);
            Color        = ictcp2rgb(ictcp * float3(1.0, saturation.xx));
-    float3 perChannel   = adyLOG(Color, 2 + agcc_contrast);
+
+    float3 perChannel;
+           if(!useFuji)
+           perChannel   = adyLOG(Color, 2 + agcc_contrast);
+           if(useFuji)
+           perChannel   = fujiFLog(Color, pcvLum(adaptation));
     float  peak         = max3(Color);
            Color       *= rcp(peak + 1e-6);
+
+           if(!useFuji)
            Color       *= adyLOG(peak, 2 + agcc_contrast);
+
+           if(useFuji)
+           Color       *= fujiFLog(Color, pcvLum(adaptation));
+
            Color        = lerp(Color, perChannel, HueShift);
            Color        = rgb2ictcp(Color);
     float  satBoost     = Resaturation * smoothstep(1.0, 0.5, ictcp.x);
@@ -167,8 +210,8 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
 
     // Color edits
             Color        = ldexp(Color, Exposure + agcc_brightness - (Adapt * adaptImapct)); // exposure
-            Color        = frostbyteTonemap(Color, agcc_contrast, agcc_saturation);
-            Color        = pow(Color, (Gamma - RGBGamma) + 0.5);
+            Color        = frostbyteTonemap(Color, agcc_contrast, agcc_saturation, Adapt);
+            Color        = pow(Color, (Gamma - RGBGamma) + 0.5 + agcc_contrast);
     float   Luma         = saturate(GetLuma(Color, Rec709)); // saturate here cuz the WhiteBalance shader has issues with higher values than 1
             Color        = saturate(ChangeWhiteBalance(Color, Luma, ColorTemperature));
 
