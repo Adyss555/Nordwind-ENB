@@ -6,9 +6,8 @@
 //==========================================//
 // the Color.a portion is to create a mask of where the letterboxes are in alpha channel. This is used for underwater shaders wich usually just draw over Letterboxes
 
-float4 applyLetterbox(float4 Color, float Depth, float2 coord)
+float3 applyLetterbox(float3 Color, float Depth, float2 coord)
 {
-			 Color.a 		= 1.0; // Underwater Shader workaround
 	float 	 rotSin 		= sin(BoxRotation);
 	float	 rotCos 		= cos(BoxRotation);
 	float2x2 rotationMatrix = float2x2(rotCos, -rotSin, rotSin, rotCos);
@@ -22,11 +21,11 @@ float4 applyLetterbox(float4 Color, float Depth, float2 coord)
 	{
 		if(rotationCoord.x > 1.0 - vBoxSize || rotationCoord.y < hBoxSize)
 		{
-			Color = float4(BoxColor, 0);
+			Color = BoxColor;
 		}
 		if (rotationCoord.y > 1.0 - hBoxSize || rotationCoord.x < vBoxSize)
 		{
-			Color = float4(BoxColor, 0);
+			Color = BoxColor;
 		}
 	}
 	return Color;

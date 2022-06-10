@@ -18,7 +18,7 @@
 // TreyM: some helper functions and genral Advice   //
 //==================================================//
 
-#define scale 2.0 // Size of blur used in many effects in this file. Range 0.0 - 3.0
+static const float scale = 2.0; // Size of blur used in many effects in this file. Range 0.0 - 3.0
 
 //==================================================//
 // Textures                                         //
@@ -48,13 +48,13 @@ Texture2D			RenderTargetRGB32F;  // 32 bit hdr format without alpha
 //==================================================//
 // UI                                               //
 //==================================================//
-UI_MESSAGE(1,                   "|===== Fake HDR =====")
+UI_MESSAGE(1,                   "|----- Fake HDR -----")
 UI_FLOAT(ShadowRange,           "| Calibrate Shadow Range",     0.0, 1.0, 0.18)
 UI_FLOAT(LiftShadows,           "| Lighten Shadows",            0.0, 1.0, 0.2)
 UI_FLOAT(shadowBlur,            "| Blur Shadows",               0.0, 1.0, 0.1)
 UI_FLOAT(HDRTone,               "| HDR Tone",                   0.0, 1.0, 0.0)
 UI_WHITESPACE(1)
-UI_MESSAGE(2,                   "|===== Atmosphere =====")
+UI_MESSAGE(2,                   "|----- Atmosphere -----")
 UI_BOOL(enableAtmosphere,       "| Enable Atmosphere",          false)
 UI_FLOAT_EI(airDensity,         "| Air Density",                0.0, 10.0, 0.0)
 UI_FLOAT3_EI(airTint,           "| Air Tint",                   1.0, 1.0, 1.0)
@@ -62,25 +62,34 @@ UI_FLOAT_EI(nearPlane,          "| Air Distance",               0.0, 10.0, 1.0)
 UI_FLOAT_EI(farPlane,           "| Air Start",                  0.0, 10.0, 0.0)
 UI_BOOL(showMask,               "| Show mask",                  false)
 UI_WHITESPACE(2)
-UI_MESSAGE(3,                   "|===== Sharpening =====")
+UI_MESSAGE(3,                   "|----- Sharpening -----")
 UI_BOOL(enableSharpening,       "| Enable Sharpening",          false)
 UI_FLOAT(SharpenigOffset,       "| Sharpening Offset",          0.2, 2.0, 1.0)
 UI_FLOAT(SharpeningStrength,    "| Sharpening Strength",      	0.2, 3.0, 1.0)
 UI_FLOAT(SharpDistance,         "| Sharpening Fadeout",			0.1, 15.0, 3.0)
 UI_BOOL(ignoreSkin,             "| Ignore Skin",                false)
 UI_WHITESPACE(3)
-UI_MESSAGE(4,                   "|===== Skin =====")
+UI_MESSAGE(4,                   "|----- Skin -----")
 UI_BOOL(enableSkinEdit,         "| Enable Skin Edit",           false)
 UI_FLOAT(skinGamma,             "| Skin Gamma",			        0.2, 2.2, 1.0)
 UI_INT(skinTone,                "| Skin Tone",                  1.0, 100.0, 50.0)
 UI_FLOAT3(skinTint,             "| Skin Tint",                  0.5, 0.5, 0.5)
 UI_FLOAT(skinCut,               "| Effect fade distance",       0.0, 10.0, 1.0)
+UI_WHITESPACE(4)
+UI_MESSAGE(5,                   "|----- AA -----")
+UI_BOOL(enableFxaa,             "| Enable FXAA",                false)
+UI_FLOAT(fxaaEdgeThreshhold,    "| FXAA Edge Threshhold ",	    0.0, 1.0, 0.0)
+UI_FLOAT(fxaaEdgeThreshholdMin, "| FXAA Edge Threshhold Min",	0.0, 1.0, 0.0)
+UI_FLOAT(fxaaSubpixCap,         "| FXAA Subpix Cap",	        0.0, 3.0, 0.75)
+UI_FLOAT(fxaaSubpixTrim,        "| FXAA Subpix Trim",	        0.0, 1.0, 0.12)
 
 
 //==================================================//
 // Functions                                		//
 //==================================================//
 #include "Include/Shaders/sharpening.fxh"
+#include "Include/Shaders/SMAA/enbsmaa.fx"
+#include "Include/Shaders/FXAA3.fxh"
 
 //==================================================//
 // Pixel Shaders                                    //
@@ -99,7 +108,7 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
            skinColor    = lerp(pow(skinColor, float3(1.0, 0.95, 0.9)), pow(skinColor, float3(0.85, 0.9, 1.0)), skinTone *  0.01);
            skinColor    = pow(skinColor, skinGamma);
            skinColor    = skinColor * (0.5 + skinTint);
-           color        = lerp(color, skinColor / (1 + color), skinned * enableSkinEdit);
+           color        = lerp(color, skinColor, skinned * enableSkinEdit);
 
     // Calc Shadows and Hightlights and edit them
     float  Lo           = ShadowRange - saturate(min3(color));
@@ -123,6 +132,11 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
           return mip;
 
     return color;
+}
+
+float4 PS_FXAA(VS_OUTPUT IN) : SV_Target
+{
+    return enableFxaa ? FXAA(TextureColor, IN.txcoord.xy) : TextureColor.Sample(PointSampler, IN.txcoord.xy);
 }
 
 // down and updsampling does wonders for Blurring
@@ -154,6 +168,15 @@ float3	PS_Resample(VS_OUTPUT IN, uniform bool upsample) : SV_Target
 //==================================================//
 // Techniques                                       //
 //==================================================//
+technique11 test <string UIName="Nordwind Test";>
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
+    }
+}
+
 technique11 pre <string UIName="Nordwind Prepass";>
 {
     pass p0
@@ -222,6 +245,137 @@ technique11 pre7
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
+    }
+}
+
+technique11 pre8
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
         SetPixelShader (CompileShader(ps_5_0, PS_Sharpening()));
+    }
+}
+
+
+// SMAA pases
+technique11 smaa <string UIName="Nordwind + SMAA";>
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(false)));
+    }
+}
+
+technique11 smaa1
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(false)));
+    }
+}
+
+technique11 smaa2
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(false)));
+    }
+}
+
+technique11 smaa3
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(true)));
+    }
+}
+
+technique11 smaa4
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(true)));
+    }
+}
+
+technique11 smaa5
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(true)));
+    }
+}
+
+technique11 smaa6
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Color()));
+    }
+}
+
+technique11 smaa7
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
+    }
+}
+
+technique11 smaa8
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Sharpening()));
+    }
+}
+
+technique11 smaa9 <string RenderTarget= SMAA_STRING(SMAA_EDGE_TEX);>
+{
+    pass Clear
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_SMAAClear()));
+        SetPixelShader (CompileShader(ps_5_0, PS_SMAAClear()));
+    }
+
+    pass EdgeDetection
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_SMAAEdgeDetection()));
+        SetPixelShader (CompileShader(ps_5_0, PS_SMAAEdgeDetection()));
+    }
+}
+
+technique11 smaa10 <string RenderTarget=SMAA_STRING(SMAA_BLEND_TEX);>
+{
+    pass Clear
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_SMAAClear()));
+        SetPixelShader (CompileShader(ps_5_0, PS_SMAAClear()));
+    }
+
+    pass BlendingWeightCalculation
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_SMAABlendingWeightCalculation()));
+        SetPixelShader (CompileShader(ps_5_0, PS_SMAABlendingWeightCalculation()));
+    }
+}
+
+technique11 smaa11
+{
+    pass NeighborhoodBlending
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_SMAANeighborhoodBlending()));
+        SetPixelShader (CompileShader(ps_5_0, PS_SMAANeighborhoodBlending()));
     }
 }

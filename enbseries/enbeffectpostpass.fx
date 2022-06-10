@@ -66,8 +66,6 @@ UI_WHITESPACE(4)
 UI_BOOL(enableCA,                   "| Enable Chromatic Aberration",false)
 UI_FLOAT(RadialCA,                  "|  Aberration Strength",      	0.0, 2.5, 1.0)
 UI_FLOAT(barrelPower,               "|  Aberration Curve",         	0.0, 2.5, 1.0)
-UI_WHITESPACE(5)
-UI_BOOL(enableFxaa,                 "| Enable FXAA",             	false)
 UI_WHITESPACE(6)
 UI_MESSAGE(3,                       "|===== Color =====")
 UI_MESSAGE(4,                       "| Image Saturation:")
@@ -126,10 +124,10 @@ UI_FLOAT(BCP2,                      "|  Blue Curve Upper End",   	-5.0, 5.0, 0.6
 UI_FLOAT(BEP,                       "|  Blue Curve End Point",   	0.0, 2.0, 1.0)
 UI_WHITESPACE(13)
 UI_MESSAGE(11,                      "| Channel Isolation:")
-UI_FLOAT_FINE(hueMid ,           	"|  Hue Selection ",          	0.0, 1.0, 0.0, 0.001)
-UI_FLOAT(hueRange  ,          	    "|  Hue Range ",               	0.0, 1.0, 0.1)
-UI_FLOAT(satLimit ,        			"|  Saturation Limit",         	0.0, 1.0, 1.0)
-UI_FLOAT(fxcolorMix  ,        	    "|  Mix Isolated Color",       	0.0, 1.0, 0.1)
+UI_FLOAT_FINE(hueMid,           	"|  Hue Selection ",          	0.0, 1.0, 0.0, 0.001)
+UI_FLOAT(hueRange,          	    "|  Hue Range ",               	0.0, 1.0, 0.1)
+UI_FLOAT(satLimit,        			"|  Saturation Limit",         	0.0, 1.0, 1.0)
+UI_FLOAT(fxcolorMix,        	    "|  Mix Isolated Color",       	0.0, 1.0, 0.1)
 
 
 //==================================================//
@@ -145,8 +143,6 @@ UI_FLOAT(fxcolorMix  ,        	    "|  Mix Isolated Color",       	0.0, 1.0, 0.1
 //#include "Include/Shaders/sharpening.fxh" //moved to prepass to mask out Skin
 #include "Include/Shaders/colorIsolation.fxh"
 #include "Include/Shaders/curve.fxh"
-#include "Include/Shaders/FXAA.fxh"
-#include "Include/Shaders/SMAA/enbsmaa.fx"
 
 //==================================================//
 // Pixel Shaders                            		//
@@ -155,7 +151,7 @@ UI_FLOAT(fxcolorMix  ,        	    "|  Mix Isolated Color",       	0.0, 1.0, 0.1
 float3 PS_Color(VS_OUTPUT IN) : SV_Target
 {
 	float2 coord	= IN.txcoord.xy;
-    float3 Color    = TextureColor.Sample(PointSampler, coord);
+	float3 Color 	= TextureColor.Sample(PointSampler, coord);
     float  Luma     = GetLuma(Color, Rec709);
 
            Color    = lerp(Luma, Color, saturation);
@@ -190,7 +186,7 @@ float4 PS_PostFX(VS_OUTPUT IN, float4 v0 : SV_Position0) : SV_Target
 
     //Letterboxes
     if(enableLetterbox)
-    Color   = applyLetterbox(Color, getLinearizedDepth(coord), coord);
+    Color.rgb = applyLetterbox(Color, getLinearizedDepth(coord), coord);
 
 	// Draw Debug Graph
 	if(showCurveGraph)
@@ -228,12 +224,12 @@ float3 PS_LensCA(VS_OUTPUT IN) : SV_Target
 // Techniques                               		//
 //==================================================//
 
-technique11 post  <string UIName="Nordwind Postpass";>
+technique11 post <string UIName="Nordwind Postpass";>
 {
 	pass p0
 	{
 		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
+		SetPixelShader (CompileShader(ps_5_0, PS_Color()));
 	}
 }
 
@@ -242,7 +238,7 @@ technique11 post1
 	pass p0
 	{
 		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_Color()));
+		SetPixelShader (CompileShader(ps_5_0, PS_LensDistortion()));
 	}
 }
 
@@ -251,7 +247,7 @@ technique11 post2
 	pass p0
 	{
 		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_LensDistortion()));
+		SetPixelShader (CompileShader(ps_5_0, PS_LensCABlur()));
 	}
 }
 
@@ -260,115 +256,11 @@ technique11 post3
 	pass p0
 	{
 		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_LensCABlur()));
+		SetPixelShader (CompileShader(ps_5_0, PS_LensCA()));
 	}
 }
 
 technique11 post4
-{
-	pass p0
-	{
-		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_LensCA()));
-	}
-}
-
-technique11 post5
-{
-	pass p0
-	{
-		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_PostFX()));
-	}
-}
-
-// This time with SMAA passes
-
-technique11 smaa <string UIName= "Nordwind + SMAA";>
-{
-	pass p0
-	{
-		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
-	}
-}
-
-technique11 smaa1 <string RenderTarget= SMAA_STRING(SMAA_EDGE_TEX); >
-{
-    pass Clear
-    {
-        SetVertexShader(CompileShader(vs_5_0, VS_SMAAClear()));
-        SetPixelShader (CompileShader(ps_5_0, PS_SMAAClear()));
-    }
-
-    pass EdgeDetection
-    {
-        SetVertexShader(CompileShader(vs_5_0, VS_SMAAEdgeDetection()));
-        SetPixelShader (CompileShader(ps_5_0, PS_SMAAEdgeDetection()));
-    }
-}
-
-technique11 smaa2 <string RenderTarget=SMAA_STRING(SMAA_BLEND_TEX);>
-{
-    pass Clear
-    {
-        SetVertexShader(CompileShader(vs_5_0, VS_SMAAClear()));
-        SetPixelShader (CompileShader(ps_5_0, PS_SMAAClear()));
-    }
-
-    pass BlendingWeightCalculation
-    {
-        SetVertexShader(CompileShader(vs_5_0, VS_SMAABlendingWeightCalculation()));
-        SetPixelShader (CompileShader(ps_5_0, PS_SMAABlendingWeightCalculation()));
-    }
-}
-
-technique11 smaa3
-{
-    pass NeighborhoodBlending
-    {
-        SetVertexShader(CompileShader(vs_5_0, VS_SMAANeighborhoodBlending()));
-        SetPixelShader (CompileShader(ps_5_0, PS_SMAANeighborhoodBlending()));
-    }
-}
-
-technique11 smaa4
-{
-	pass p0
-	{
-		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_Color()));
-	}
-}
-
-technique11 smaa5
-{
-	pass p0
-	{
-		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_LensDistortion()));
-	}
-}
-
-technique11 smaa6
-{
-	pass p0
-	{
-		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_LensCABlur()));
-	}
-}
-
-technique11 smaa7
-{
-	pass p0
-	{
-		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_LensCA()));
-	}
-}
-
-technique11 smaa8
 {
 	pass p0
 	{
