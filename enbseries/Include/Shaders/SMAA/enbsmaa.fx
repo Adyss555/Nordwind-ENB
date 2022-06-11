@@ -45,7 +45,7 @@
 ============================================================================================*/
 
 #define SMAA_PRESET      3  // 0 == low, 1 == medium, 2 == high, 3 == ultra, 4 == custom preset, 5 == runtime UI tweak
-#define SMAA_PREDICATION 1  // 0 == off, see descriptions below
+#define SMAA_PREDICATION 0  // 0 == off, see descriptions below
 #define SMAA_EDGE_MODE   0  // 0 == color(quality), 1 == luma, 2 == depth(performance)
 #define SMAA_DEBUG       0  // 0 == off, enable additional options to display texture in each stage
 
