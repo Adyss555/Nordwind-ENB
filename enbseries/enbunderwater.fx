@@ -48,15 +48,15 @@ float3	PS_Prepass(VS_OUTPUT IN) : SV_Target
     float3 Color    = TextureColor.Sample(PointSampler, coord);
     //clip(Color); // i hoped this would be a good workaround for the Letterbox issue. Does not work tho
 
-    float  Luma     = GetLuma(Color, Rec709);
-    float4 Mask     = TextureMask.Sample(LinearSampler, coord);
-	float  Depth    = getLinearizedDepth(coord);
-	float  Map      = (1 - saturate((Depth - nearPlane) / (farPlane - nearPlane))) * Mask.x;
-           Color    = lerp(BlendScreenHDR(Color, TintColor.rgb * TintColor.a), Color, exp(-fogDensity * Map));
+	float  	Luma     = GetLuma(Color, Rec709);
+	float4 	Mask     = TextureMask.Sample(LinearSampler, coord);
+	float  	Depth    = getLinearizedDepth(coord);
+	float  	Map      = (1 - saturate((Depth - nearPlane) / (farPlane - nearPlane))) * Mask.x;
+		   	Color    = lerp(BlendScreenHDR(Color, TintColor.rgb * TintColor.a), Color, exp(-fogDensity * Map));
 
-           Color    = 1 - exp(-Color);
+			Color    = 1 - exp(-Color);
 
-	return Color;
+	return 	Color;
 }
 
 // TECHNIQUES

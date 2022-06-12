@@ -17,7 +17,7 @@ float3 PS_Sharpening(VS_OUTPUT IN) : SV_Target
            Sharp  += TextureColor.Sample(PointSampler, East); // PointSampler looks sharper but youll have to fight aliasing
            Sharp  *= 0.25;
 
-    float3 Skin           = floor(1 - TextureMask.Sample(LinearSampler, coord).aaa);
+    float  Skin           = floor(1 - TextureMask.Sample(LinearSampler, coord).a);
     float  SharpeningMask = getEdges(TextureDepth, coord, PixelSize); // Remove Depth Edges from Sharpening to prevent aliasing
            SharpeningMask = 1 - pow(SharpeningMask, 0.45) * 1 - smoothstep(0.0, SharpDistance * 0.025, getLinearizedDepth(coord));
 

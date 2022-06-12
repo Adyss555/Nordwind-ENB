@@ -44,15 +44,8 @@ Texture2D		RenderTargetRGB32F;  //32 bit hdr format without alpha
 //==================================================//
 // UI                                       		//
 //==================================================//
-UI_MESSAGE(1,                      	"|===== Letterbox =====")
-UI_BOOL(enableLetterbox,            "| Enable Letterbox",	    	false)
-UI_FLOAT(hBoxSize,                  "| Horizontal Size",			-0.5, 0.5, 0.1)
-UI_FLOAT(vBoxSize,                  "| Vertical Size",          	-0.5, 0.5, 0.0)
-UI_FLOAT(BoxRotation,               "| Letterbox Rotation",	    	0.0, 6.0, 0.0)
-UI_FLOAT3(BoxColor,                 "| Letterbox Color",         	0.0, 0.0, 0.0)
-UI_FLOAT(LetterboxDepth,            "| Letterbox Distance",      	0.0, 10.0, 0.0)
 UI_WHITESPACE(1)
-UI_MESSAGE(2,                     	"|===== Camera Effects =====")
+UI_MESSAGE(2,                     	"|----- Camera Effects -----")
 UI_BOOL(enableDistortion,           "| Enable Lens Distortion",   	false)
 UI_INT(lensDistortion,              "|  Distortion Amount",       	-100, 100, 0)
 UI_WHITESPACE(2)
@@ -66,8 +59,15 @@ UI_WHITESPACE(4)
 UI_BOOL(enableCA,                   "| Enable Chromatic Aberration",false)
 UI_FLOAT(RadialCA,                  "|  Aberration Strength",      	0.0, 2.5, 1.0)
 UI_FLOAT(barrelPower,               "|  Aberration Curve",         	0.0, 2.5, 1.0)
+UI_WHITESPACE(5)
+UI_BOOL(enableLetterbox,            "| Enable Letterbox",	    	false)
+UI_FLOAT(hBoxSize,                  "| 	Horizontal Size",			-0.5, 0.5, 0.1)
+UI_FLOAT(vBoxSize,                  "| 	Vertical Size",          	-0.5, 0.5, 0.0)
+UI_FLOAT(BoxRotation,               "| 	Letterbox Rotation",	    0.0, 6.0, 0.0)
+UI_FLOAT3(BoxColor,                 "| 	Letterbox Color",         	0.0, 0.0, 0.0)
+UI_FLOAT(LetterboxDepth,            "| 	Letterbox Distance",      	0.0, 10.0, 0.0)
 UI_WHITESPACE(6)
-UI_MESSAGE(3,                       "|===== Color =====")
+UI_MESSAGE(3,                       "|----- Color -----")
 UI_MESSAGE(4,                       "| Image Saturation:")
 UI_FLOAT(vibrance,                  "|  Vibrance",              	-1.0, 1.0, 0.10)
 UI_FLOAT3(vibranceRGBBalance,       "|  RGB Vibrance",           	1.0, 1.0, 1.0)
@@ -188,17 +188,17 @@ float4 PS_PostFX(VS_OUTPUT IN, float4 v0 : SV_Position0) : SV_Target
     if(enableLetterbox)
     Color.rgb = applyLetterbox(Color, getLinearizedDepth(coord), coord);
 
-	// Draw Debug Graph
+	// Draw Curve Graph
 	if(showCurveGraph)
 	{
 		Color.a			= 1.0; // needed for this to work
 		GraphStruct g 	= graphNew(float2(Resolution.x - grapthSize, 3), float2(grapthSize, grapthSize), v0.xy, float2(6, 6));
 		g.drop_shadow 	= 0.5;
 	    g.roundness 	= 5.0;
-		graphAddPlot(g, Curve(g.uv.x, float4(RSP, RCP1, RCP2, REP)), float3(1.0, 0.0, 0.0)); // R
-		graphAddPlot(g, Curve(g.uv.x, float4(GSP, GCP1, GCP2, GEP)), float3(0.0, 1.0, 0.0)); // G
-		graphAddPlot(g, Curve(g.uv.x, float4(BSP, BCP1, BCP2, BEP)), float3(0.0, 0.0, 1.0)); // B
-		graphAddPlot(g, Curve(g.uv.x, float4(LSP, LCP1, LCP2, LEP)), float3(1.0, 1.0, 1.0)); // L
+		graphAddPlot(g, cubicBezierCurve(g.uv.x, float4(RSP, RCP1, RCP2, REP)), float3(1.0, 0.0, 0.0)); // R
+		graphAddPlot(g, cubicBezierCurve(g.uv.x, float4(GSP, GCP1, GCP2, GEP)), float3(0.0, 1.0, 0.0)); // G
+		graphAddPlot(g, cubicBezierCurve(g.uv.x, float4(BSP, BCP1, BCP2, BEP)), float3(0.0, 0.0, 1.0)); // B
+		graphAddPlot(g, cubicBezierCurve(g.uv.x, float4(LSP, LCP1, LCP2, LEP)), float3(1.0, 1.0, 1.0)); // L
 		graphDraw(g, Color);
 	}
 

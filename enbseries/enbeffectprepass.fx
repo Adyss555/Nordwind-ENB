@@ -51,7 +51,7 @@ Texture2D			RenderTargetRGB32F;  // 32 bit hdr format without alpha
 UI_MESSAGE(1,                   "|----- Fake HDR -----")
 UI_FLOAT(ShadowRange,           "| Calibrate Shadow Range",     0.0, 1.0, 0.18)
 UI_FLOAT(LiftShadows,           "| Lighten Shadows",            0.0, 1.0, 0.2)
-UI_FLOAT(shadowBlur,            "| Blur Shadows",               0.0, 1.0, 0.1)
+UI_FLOAT(shadowBlur,            "| Blur Shadows",               0.0, 2.0, 0.1)
 UI_FLOAT(HDRTone,               "| HDR Tone",                   0.0, 1.0, 0.0)
 UI_WHITESPACE(1)
 UI_MESSAGE(2,                   "|----- Atmosphere -----")
@@ -76,7 +76,13 @@ UI_INT(skinTone,                "| Skin Tone",                  1.0, 100.0, 50.0
 UI_FLOAT3(skinTint,             "| Skin Tint",                  0.5, 0.5, 0.5)
 UI_FLOAT(skinCut,               "| Effect fade distance",       0.0, 10.0, 1.0)
 UI_WHITESPACE(4)
-UI_MESSAGE(5,                   "|----- AA -----")
+UI_MESSAGE(5,                   "|----- Sun -----")
+UI_BOOL(enableSunGlow,          "| Enable Glow",                false)
+UI_FLOAT(glowStrength,          "|  Glow Strength",             0.1, 3.0, 1.0)
+UI_FLOAT(glowCurve,             "|  Glow Curve",                0.1, 3.0, 1.0)
+UI_FLOAT3(glowTint,             "|  Glow Tint",                 0.5, 0.5, 0.5)
+UI_WHITESPACE(5)
+UI_MESSAGE(6,                   "|----- AA -----")
 UI_BOOL(enableFxaa,             "| Enable FXAA",                false)
 UI_FLOAT(fxaaEdgeThreshhold,    "| FXAA Edge Threshhold ",	    0.0, 1.0, 0.0)
 UI_FLOAT(fxaaEdgeThreshholdMin, "| FXAA Edge Threshhold Min",	0.0, 1.0, 0.0)
@@ -91,6 +97,25 @@ UI_FLOAT(fxaaSubpixTrim,        "| FXAA Subpix Trim",	        0.0, 1.0, 0.12)
 #include "Include/Shaders/SMAA/enbsmaa.fx"
 #include "Include/Shaders/FXAA3.fxh"
 
+float2 getSun()
+{
+    float3 Sundir       = SunDirection.xyz / SunDirection.w;
+    float2 Suncoord     = Sundir.xy / Sundir.z;
+           Suncoord     = Suncoord * float2(0.48, ScreenSize.z * 0.48) + 0.5;
+           Suncoord.y   = 1.0 - Suncoord.y;
+    return Suncoord;
+}
+
+float getGlow(float2 uv, float2 pos)
+{
+    return 1.0 / (length(uv - pos) * 16.0 + 1.0);
+}
+
+float getDistance(float2 sunPos)
+{
+    return lerp(1, 0, distance(sunPos, float2(0.5, 0.5)));
+}
+
 //==================================================//
 // Pixel Shaders                                    //
 //==================================================//
@@ -102,6 +127,7 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
     float4 ambient      = TextureMask.Sample(LinearSampler, coord);
     float  depth        = getLinearizedDepth(coord);
     float  skinned      = floor(1 - ambient.a) * saturate(1 - smoothstep(0.0, skinCut * 0.03, depth)); // Floor here gets rid of "skinned" objects and reveals only Skin for the most part
+    float  sky          = floor(depth); // returns only the sky as pure white
 
     // Skin Color edits
     float3 skinColor    = color * skinned;
@@ -113,7 +139,7 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
     // Calc Shadows and Hightlights and edit them
     float  Lo           = ShadowRange - saturate(min3(color));
            color        = lerp(color, lerp(color, max(color, ambient), Lo), LiftShadows);
-           color        = lerp(color, blur, saturate(Lo * Lo * shadowBlur));
+    //       color        = lerp(color, blur, saturate(pow(Lo, shadowBlur)));
 
     // HDR Tone from Ansel
     float  luma         = GetLuma(color, Rec709);
@@ -122,18 +148,30 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
     float  HDRToning    = sqrtLum * lerp(sqrtLum * (2 * luma * blurLuma - luma - 2 * luma + 2.0), (2 * sqrtLum * blurLuma - 2 * blurLuma + 1), luma > 0.5); //modified soft light v1
       	   color        = color / (luma+1e-6) * lerp(luma, HDRToning, HDRTone);
 
-    // Atmosphere Shader by TreyM
-    float mip           = (1 - saturate((depth - nearPlane) / (farPlane - nearPlane)));
+    // Atmosphere Shader by TreyM. Modified by Adyss
+    float fogPlane      = (1 - saturate((depth - nearPlane) / (farPlane - nearPlane)));
 
           if(enableAtmosphere)
-          color         = lerp(BlendScreenHDR(blur, airTint), color, exp(-airDensity * mip));
+          color         = lerp(BlendScreenHDR(blur, airTint), color, exp(-airDensity * fogPlane));
 
           if(showMask)
-          return mip;
+          return fogPlane;
+
+    // Sunglow Shader
+    float2 sunPos       = getSun(); 
+    float  sunDistance  = getDistance(sunPos);
+    float3 sunOpacity   = TextureColor.Sample(LinearSampler, sunPos);
+    float3 glow         = getGlow(float2(coord.x, coord.y * ScreenSize.w), float2(sunPos.x, sunPos.y * ScreenSize.w));
+           glow         = pow(glow, glowCurve);
+           glow        += triDither(glow, coord, Timer.x, 8);
+
+           if(enableSunGlow && !EInteriorFactor)
+           color        = BlendScreenHDR(color, (glow * sunOpacity * glowStrength * glowTint));
 
     return color;
 }
 
+// I prefer it having its own entire pass
 float4 PS_FXAA(VS_OUTPUT IN) : SV_Target
 {
     return enableFxaa ? FXAA(TextureColor, IN.txcoord.xy) : TextureColor.Sample(PointSampler, IN.txcoord.xy);
@@ -168,14 +206,6 @@ float3	PS_Resample(VS_OUTPUT IN, uniform bool upsample) : SV_Target
 //==================================================//
 // Techniques                                       //
 //==================================================//
-technique11 test <string UIName="Nordwind Test";>
-{
-    pass p0
-    {
-        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
-    }
-}
 
 technique11 pre <string UIName="Nordwind Prepass";>
 {

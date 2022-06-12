@@ -218,10 +218,6 @@ UI_FLOAT3(sSpriteColor20,     "Color",                           1.0, 1.0, 1.0)
 // Functions                                        //
 //==================================================//
 
-float getGlow(float2 uv, float2 pos)
-{
-    return 1.0 / (length(uv - pos) * 16.0 + 1.0);
-}
 
 //==================================================//
 // Pixel Shaders                                    //
