@@ -111,11 +111,6 @@ float getGlow(float2 uv, float2 pos)
     return 1.0 / (length(uv - pos) * 16.0 + 1.0);
 }
 
-float getDistance(float2 sunPos)
-{
-    return lerp(1, 0, distance(sunPos, float2(0.5, 0.5)));
-}
-
 //==================================================//
 // Pixel Shaders                                    //
 //==================================================//
@@ -159,11 +154,11 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
 
     // Sunglow Shader
     float2 sunPos       = getSun(); 
-    float  sunDistance  = getDistance(sunPos);
+    float  sunOnScreen  = RenderTargetR16F.Sample(LinearSampler, sunPos);
     float3 sunOpacity   = TextureColor.Sample(LinearSampler, sunPos);
     float3 glow         = getGlow(float2(coord.x, coord.y * ScreenSize.w), float2(sunPos.x, sunPos.y * ScreenSize.w));
            glow         = pow(glow, glowCurve);
-           glow        += triDither(glow, coord, Timer.x, 8);
+           glow        += triDither(glow, coord, Timer.x, 8); //clean up a bit
 
            if(enableSunGlow && !EInteriorFactor)
            color        = BlendScreenHDR(color, (glow * sunOpacity * glowStrength * glowTint));
@@ -175,6 +170,11 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
 float4 PS_FXAA(VS_OUTPUT IN) : SV_Target
 {
     return enableFxaa ? FXAA(TextureColor, IN.txcoord.xy) : TextureColor.Sample(PointSampler, IN.txcoord.xy);
+}
+
+float PS_MaskSky(VS_OUTPUT IN) : SV_Target
+{
+    return floor(getLinearizedDepth(IN.txcoord.xy));
 }
 
 // down and updsampling does wonders for Blurring
@@ -207,12 +207,12 @@ float3	PS_Resample(VS_OUTPUT IN, uniform bool upsample) : SV_Target
 // Techniques                                       //
 //==================================================//
 
-technique11 pre <string UIName="Nordwind Prepass";>
+technique11 pre <string RenderTarget="RenderTargetR16F"; string UIName="Nordwind Prepass";>
 {
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_Resample(false)));
+        SetPixelShader (CompileShader(ps_5_0, PS_MaskSky()));
     }
 }
 
@@ -239,7 +239,7 @@ technique11 pre3
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_Resample(true)));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(false)));
     }
 }
 
@@ -266,7 +266,7 @@ technique11 pre6
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_Color()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(true)));
     }
 }
 
@@ -275,11 +275,20 @@ technique11 pre7
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Color()));
     }
 }
 
 technique11 pre8
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
+    }
+}
+
+technique11 pre9
 {
     pass p0
     {
@@ -290,12 +299,12 @@ technique11 pre8
 
 
 // SMAA pases
-technique11 smaa <string UIName="Nordwind + SMAA";>
+technique11 smaa <string RenderTarget="RenderTargetR16F"; string UIName="Nordwind + SMAA";>
 {
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_Resample(false)));
+        SetPixelShader (CompileShader(ps_5_0, PS_MaskSky()));
     }
 }
 
@@ -322,7 +331,7 @@ technique11 smaa3
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_Resample(true)));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(false)));
     }
 }
 
@@ -349,7 +358,7 @@ technique11 smaa6
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_Color()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(true)));
     }
 }
 
@@ -358,7 +367,7 @@ technique11 smaa7
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Color()));
     }
 }
 
@@ -367,11 +376,20 @@ technique11 smaa8
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+        SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
+    }
+}
+
+technique11 smaa9
+{
+    pass p0
+    {
+        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
         SetPixelShader (CompileShader(ps_5_0, PS_Sharpening()));
     }
 }
 
-technique11 smaa9 <string RenderTarget= SMAA_STRING(SMAA_EDGE_TEX);>
+technique11 smaa10 <string RenderTarget= SMAA_STRING(SMAA_EDGE_TEX);>
 {
     pass Clear
     {
@@ -386,7 +404,7 @@ technique11 smaa9 <string RenderTarget= SMAA_STRING(SMAA_EDGE_TEX);>
     }
 }
 
-technique11 smaa10 <string RenderTarget=SMAA_STRING(SMAA_BLEND_TEX);>
+technique11 smaa11 <string RenderTarget=SMAA_STRING(SMAA_BLEND_TEX);>
 {
     pass Clear
     {
@@ -401,7 +419,7 @@ technique11 smaa10 <string RenderTarget=SMAA_STRING(SMAA_BLEND_TEX);>
     }
 }
 
-technique11 smaa11
+technique11 smaa12
 {
     pass NeighborhoodBlending
     {

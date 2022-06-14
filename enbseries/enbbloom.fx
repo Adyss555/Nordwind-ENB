@@ -30,30 +30,53 @@ Texture2D			RenderTargetR16F;    // R16F 16 bit hdr format with red channel only
 Texture2D			RenderTargetR32F;    // R32F 32 bit hdr format with red channel only
 Texture2D			RenderTargetRGB32F;  // 32 bit hdr format without alpha
 
+Texture2D           lensDirt1           <string ResourceName="Include/Textures/lensdirt1.jpg"; >;
+Texture2D           lensDirt2           <string ResourceName="Include/Textures/lensdirt2.jpg"; >;
+Texture2D           lensDirt3           <string ResourceName="Include/Textures/lensdirt3.jpg"; >;
+
 //=============================================//
 // Internals                                   //
 //=============================================//
 #include "Include/Shared/Globals.fxh"
 #include "Include/Shared/ReforgedUI.fxh"
+#include "Include/Shared/Conversions.fxh"
+#include "Include/Shared/BlendingModes.fxh"
 
 //=============================================//
 // UI                                          //
 //=============================================//
-UI_MESSAGE(m1,                    "=== Masking ===")
-UI_FLOAT(bloomSensitivity,        " Sensitivity",            0.1, 3.0, 1.0)
-UI_FLOAT(threshold,               " Threshold",              0.0, 1.0, 0.1)
-UI_FLOAT(softThreshold,           " Soft Threshold",         0.0, 1.0, 0.1)
-UI_FLOAT(removeSky,               " Mask out Sky",           0.0, 1.0, 0.3)
+UI_MESSAGE(1,                   "----- Masking -----")
+UI_FLOAT(bloomSensitivity,      " Sensitivity",             0.1, 3.0, 1.0)
+UI_FLOAT(threshold,             " Threshold",               0.0, 1.0, 0.1)
+UI_FLOAT(softThreshold,         " Soft Threshold",          0.0, 1.0, 0.1)
+UI_FLOAT(removeSky,             " Mask out Sky",            0.0, 1.0, 0.3)
 UI_WHITESPACE(1)
-UI_MESSAGE(m2,                    "=== Color ===")
-UI_FLOAT(bloomPower,              " Intensity",              0.1, 5.0, 0.5)
-UI_FLOAT(bloomSaturation,         " Saturation",             0.0, 3.0, 1.0)
-UI_FLOAT3(bloomTint,              " Tint",                   1.0, 1.0, 1.0)
-UI_BOOL(tonemapOutput,            " Tonemap output",	     false)
+UI_MESSAGE(2,                   "----- Color -----")
+UI_FLOAT(bloomPower,            " Intensity",               0.1, 5.0, 0.5)
+UI_FLOAT(bloomSaturation,       " Saturation",              0.0, 3.0, 1.0)
+UI_FLOAT3(bloomTint,            " Tint",                    1.0, 1.0, 1.0)
+UI_BOOL(tonemapOutput,          " Tonemap output",	        false)
 UI_WHITESPACE(2)
-UI_MESSAGE(m3,                    "=== Shape ===")
-UI_INT(bloomSize,                 " Samples",                4.0, 32.0, 8.0)
-UI_FLOAT(sigma,                   " Sigma",                  0.1, 5.0, 1.0)
+UI_MESSAGE(3,                   "----- Shape -----")
+UI_INT(bloomSize,               " Samples",                 4.0, 32.0, 8.0)
+UI_FLOAT(sigma,                 " Sigma",                   0.1, 5.0, 1.0)
+UI_WHITESPACE(3)
+UI_MESSAGE(4,                   "----- Adaptation -----")
+UI_BOOL(enableAdaptation,       " Enable Adaptation",       false)
+UI_INT(adaptationSamples,       "  Adaptation Samples",     2.0, 100.0, 8.0)
+UI_FLOAT(adaptationImpact,      "  Adaptation Impact",      0.0, 100.0, 1.0)
+UI_FLOAT(minAdaptation,         "  Min Adaptation",         0.0, 10.0, 0.0)
+UI_FLOAT(maxAdaptation,         "  Max Adaptation",         0.0, 10.0, 1.0)
+UI_WHITESPACE(4)
+UI_MESSAGE(5,                   "----- Lens Dirt -----")
+UI_BOOL(enableLensDirt,         " Enable Lens Dirt",	    false)
+UI_INT(selectedDirt,            "  Select Dirt Texture",    0.0, 2.0, 0.0)
+UI_FLOAT(dirtIntensity,         "  Dirt Intensity",         0.0, 2.0, 0.5)
+UI_FLOAT(dirtSpread,            "  Dirt Spread",            0.3, 2.0, 1.0)
+UI_FLOAT3(dirtTint,             "  Dirt Tint",              0.5, 0.5, 0.5)
+
+
+
 
 //=============================================//
 // Functions                                   //
@@ -200,15 +223,51 @@ float3  PS_BloomMix(VS_OUTPUT IN) : SV_Target
     return bloom * 0.142857; // Normalize  1/7 = 0.1428571428571429
 }
 
+float	PS_CalcAvgLuma(VS_OUTPUT IN) : SV_Target
+{
+    if (!enableAdaptation) discard;
+
+    float Luma = 0;
+    for (int x = 0; x < adaptationSamples; x++)
+    {
+        for (int y = 0; y < adaptationSamples; y++)
+
+        {
+            Luma += TextureColor.Sample(LinearSampler, float2(x, y) / adaptationSamples);
+        }
+    }
+    return Luma /= adaptationSamples * adaptationSamples;
+}
+
 float3  PS_Postpass(VS_OUTPUT IN) : SV_Target
 {
-    float2 coord = IN.txcoord.xy;
-    float3 color = TextureColor.Sample(LinearSampler, coord);
+    float2 coord    = IN.txcoord.xy;
+    float3 color    = TextureColor.Sample(LinearSampler, coord);
+    float  avgLuma  = RenderTargetRGBA32.Load(int3(0, 0, 0));
+           avgLuma  = clamp(avgLuma, minAdaptation, maxAdaptation);
+
+
+           color    =ldexp(color, bloomPower - (avgLuma * adaptationImpact));
 
     if (tonemapOutput)
     color = 1 - exp(-color);
 
-    return saturate(color * bloomPower);
+    float3 dirtMask = pow(color * dirtIntensity * dirtTint, dirtSpread);
+    float3 dirtTex  = 0.0;
+
+    if(selectedDirt == 0)
+    dirtTex = lensDirt1.Sample(LinearSampler, coord);
+
+    if(selectedDirt == 1)
+    dirtTex = lensDirt2.Sample(LinearSampler, coord);
+
+    if(selectedDirt == 2)
+    dirtTex = lensDirt3.Sample(LinearSampler, coord);
+
+    if(enableLensDirt)
+    color = BlendScreenHDR(color, dirtTex * dirtMask);
+
+    return saturate(color);
 }
 
 //=============================================//
@@ -272,7 +331,11 @@ technique11 Blum13
 { pass p0 { SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
             SetPixelShader (CompileShader(ps_5_0, PS_Upsample(RenderTarget1024, 1024.0))); } }
 
-technique11 Blum14
+technique11 Blum14 <string RenderTarget="RenderTargetRGBA32";>
+{ pass p0 { SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+            SetPixelShader (CompileShader(ps_5_0, PS_CalcAvgLuma())); } }
+
+technique11 Blum15
 { pass p0 { SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
             SetPixelShader (CompileShader(ps_5_0, PS_Postpass())); } }
 
@@ -322,7 +385,11 @@ technique11 middle10
 { pass p0 { SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
             SetPixelShader (CompileShader(ps_5_0, PS_Upsample(RenderTarget1024, 1024.0))); } }
 
-technique11 middle11
+technique11 middle11 <string RenderTarget="RenderTargetRGBA32";>
+{ pass p0 { SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+            SetPixelShader (CompileShader(ps_5_0, PS_CalcAvgLuma())); } }
+
+technique11 middle12
 { pass p0 { SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
             SetPixelShader (CompileShader(ps_5_0, PS_Postpass())); } }
 
@@ -368,7 +435,11 @@ technique11 smol9
 { pass p0 { SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
             SetPixelShader (CompileShader(ps_5_0, PS_Upsample(RenderTarget1024, 1024.0))); } }
 
-technique11 smol10
+technique11 smol10 <string RenderTarget="RenderTargetRGBA32";>
+{ pass p0 { SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+            SetPixelShader (CompileShader(ps_5_0, PS_CalcAvgLuma())); } }
+
+technique11 smol11
 { pass p0 { SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
             SetPixelShader (CompileShader(ps_5_0, PS_Postpass())); } }
 
@@ -437,6 +508,10 @@ technique11 normal15
 { pass p0 { SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
             SetPixelShader (CompileShader(ps_5_0, PS_BloomMix())); } }
 
-technique11 normal16
+technique11 normal16 <string RenderTarget="RenderTargetRGBA32";>
+{ pass p0 { SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+            SetPixelShader (CompileShader(ps_5_0, PS_CalcAvgLuma())); } }
+
+technique11 normal17
 { pass p0 { SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
             SetPixelShader (CompileShader(ps_5_0, PS_Postpass())); } }

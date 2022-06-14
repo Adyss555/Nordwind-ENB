@@ -2,10 +2,9 @@
 // RGBL cubic Bezier curves by Adyss //
 //===================================//
 
-float cubicBezierCurve(float x, float4 CurveValues)
+float cubicBezierCurve(float x, float4 curveValues) // x = startpoint, y = lower end, z = upper end, w = endpoint
 {
-	x = CurveValues.x * (1 - x) * (1 - x) * (1 - x) + 3 * CurveValues.y * (1 - x) * (1 - x) * x + 3 * CurveValues.z * (1 - x) * x * x + CurveValues.w * x * x *x;
-    return x;
+	return curveValues.x * (1 - x) * (1 - x) * (1 - x) + 3 * curveValues.y * (1 - x) * (1 - x) * x + 3 * curveValues.z * (1 - x) * x * x + curveValues.w * x * x *x;
 }
 
 float3 curveCombine(float3 Color)
