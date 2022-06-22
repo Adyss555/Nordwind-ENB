@@ -10,6 +10,8 @@ float	EInteriorFactor; // changes 0 or 1. 0 means that exterior, 1 - interior
 float4  SunDirection;    // Prepass exclusive. Refrence here: https://cdn.discordapp.com/attachments/335788870849265675/532859588203249666/unknown.png
 float4  Params01[7];     // skyrimse parameters
 float4  ENBParams01;     // x - bloom amount; y - lens amount
+float   FieldOfView;
+
 static const float2 PixelSize  = float2(ScreenSize.y, ScreenSize.y * ScreenSize.z); // As in Reshade
 static const float2 Resolution = float2(ScreenSize.x, ScreenSize.x * ScreenSize.w); // Display Resolution
 float4	tempF1, tempF2, tempF3; //0,1,2,3,4,5,6,7,8,9

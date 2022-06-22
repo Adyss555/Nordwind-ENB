@@ -71,6 +71,9 @@ UI_BOOL(showLens,                   " Show Lens Texture",       false)
 UI_BOOL(showAdapt,                  " Show Adaptation Level",   false)
 UI_BOOL(agccTint,                   " Enable AGCC Tinting ",    false)
 UI_BOOL(agccFade,                   " Enable AGCC Fade",        false)
+
+
+UI_FLOAT(testval,                   " Test",                0.0, 5.0, 1.0)
 //==================================================//
 // Functions                                        //
 //==================================================//

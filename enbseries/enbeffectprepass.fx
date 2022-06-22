@@ -49,32 +49,32 @@ Texture2D			RenderTargetRGB32F;  // 32 bit hdr format without alpha
 // UI                                               //
 //==================================================//
 UI_MESSAGE(1,                   "|----- Fake HDR -----")
-UI_FLOAT(ShadowRange,           "| Calibrate Shadow Range",     0.0, 1.0, 0.18)
-UI_FLOAT(LiftShadows,           "| Lighten Shadows",            0.0, 1.0, 0.2)
-UI_FLOAT(shadowBlur,            "| Blur Shadows",               0.0, 2.0, 0.1)
-UI_FLOAT(HDRTone,               "| HDR Tone",                   0.0, 1.0, 0.0)
+UI_FLOAT(ShadowRange,           "|  Calibrate Shadow Range",    0.0, 1.0, 0.18)
+UI_FLOAT(LiftShadows,           "|  Lighten Shadows",           0.0, 1.0, 0.2)
+UI_FLOAT(shadowBlur,            "|  Blur Shadows",              0.0, 2.0, 0.1)
+UI_FLOAT(HDRTone,               "|  HDR Tone",                  0.0, 1.0, 0.0)
 UI_WHITESPACE(1)
 UI_MESSAGE(2,                   "|----- Atmosphere -----")
 UI_BOOL(enableAtmosphere,       "| Enable Atmosphere",          false)
-UI_FLOAT_EI(airDensity,         "| Air Density",                0.0, 10.0, 0.0)
-UI_FLOAT3_EI(airTint,           "| Air Tint",                   1.0, 1.0, 1.0)
-UI_FLOAT_EI(nearPlane,          "| Air Distance",               0.0, 10.0, 1.0)
-UI_FLOAT_EI(farPlane,           "| Air Start",                  0.0, 10.0, 0.0)
-UI_BOOL(showMask,               "| Show mask",                  false)
+UI_FLOAT_EI(airDensity,         "|  Air Density",               0.0, 10.0, 0.0)
+UI_FLOAT3_EI(airTint,           "|  Air Tint",                  1.0, 1.0, 1.0)
+UI_FLOAT_EI(nearPlane,          "|  Air Distance",              0.0, 10.0, 1.0)
+UI_FLOAT_EI(farPlane,           "|  Air Start",                 0.0, 10.0, 0.0)
+UI_BOOL(showMask,               "|  Show mask",                 false)
 UI_WHITESPACE(2)
 UI_MESSAGE(3,                   "|----- Sharpening -----")
 UI_BOOL(enableSharpening,       "| Enable Sharpening",          false)
-UI_FLOAT(SharpenigOffset,       "| Sharpening Offset",          0.2, 2.0, 1.0)
-UI_FLOAT(SharpeningStrength,    "| Sharpening Strength",      	0.2, 3.0, 1.0)
-UI_FLOAT(SharpDistance,         "| Sharpening Fadeout",			0.1, 15.0, 3.0)
-UI_BOOL(ignoreSkin,             "| Ignore Skin",                false)
+UI_FLOAT(SharpenigOffset,       "|  Sharpening Offset",         0.2, 2.0, 1.0)
+UI_FLOAT(SharpeningStrength,    "|  Sharpening Strength",      	0.2, 3.0, 1.0)
+UI_FLOAT(SharpDistance,         "|  Sharpening Fadeout",        0.1, 15.0, 3.0)
+UI_BOOL(ignoreSkin,             "|  Ignore Skin",               false)
 UI_WHITESPACE(3)
 UI_MESSAGE(4,                   "|----- Skin -----")
 UI_BOOL(enableSkinEdit,         "| Enable Skin Edit",           false)
-UI_FLOAT(skinGamma,             "| Skin Gamma",			        0.2, 2.2, 1.0)
-UI_INT(skinTone,                "| Skin Tone",                  1.0, 100.0, 50.0)
-UI_FLOAT3(skinTint,             "| Skin Tint",                  0.5, 0.5, 0.5)
-UI_FLOAT(skinCut,               "| Effect fade distance",       0.0, 10.0, 1.0)
+UI_FLOAT(skinGamma,             "|  Skin Gamma",			    0.2, 2.2, 1.0)
+UI_INT(skinTone,                "|  Skin Tone",                 1.0, 100.0, 50.0)
+UI_FLOAT3(skinTint,             "|  Skin Tint",                 0.5, 0.5, 0.5)
+UI_FLOAT(skinCut,               "|  Effect fade distance",      0.0, 10.0, 1.0)
 UI_WHITESPACE(4)
 UI_MESSAGE(5,                   "|----- Sun -----")
 UI_BOOL(enableSunGlow,          "| Enable Glow",                false)
@@ -84,10 +84,10 @@ UI_FLOAT3(glowTint,             "|  Glow Tint",                 0.5, 0.5, 0.5)
 UI_WHITESPACE(5)
 UI_MESSAGE(6,                   "|----- AA -----")
 UI_BOOL(enableFxaa,             "| Enable FXAA",                false)
-UI_FLOAT(fxaaEdgeThreshhold,    "| FXAA Edge Threshhold ",	    0.0, 1.0, 0.0)
-UI_FLOAT(fxaaEdgeThreshholdMin, "| FXAA Edge Threshhold Min",	0.0, 1.0, 0.0)
-UI_FLOAT(fxaaSubpixCap,         "| FXAA Subpix Cap",	        0.0, 3.0, 0.75)
-UI_FLOAT(fxaaSubpixTrim,        "| FXAA Subpix Trim",	        0.0, 1.0, 0.12)
+UI_FLOAT(fxaaEdgeThreshhold,    "|  FXAA Edge Threshhold ",	    0.0, 1.0, 0.0)
+UI_FLOAT(fxaaEdgeThreshholdMin, "|  FXAA Edge Threshhold Min",	0.0, 1.0, 0.0)
+UI_FLOAT(fxaaSubpixCap,         "|  FXAA Subpix Cap",	        0.0, 3.0, 0.75)
+UI_FLOAT(fxaaSubpixTrim,        "|  FXAA Subpix Trim",	        0.0, 1.0, 0.12)
 
 
 //==================================================//
@@ -153,14 +153,13 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
           return fogPlane;
 
     // Sunglow Shader
-    float2 sunPos       = getSun(); 
-    float  sunOnScreen  = RenderTargetR16F.Sample(LinearSampler, sunPos);
+    float2 sunPos       = getSun();
     float3 sunOpacity   = TextureColor.Sample(LinearSampler, sunPos);
     float3 glow         = getGlow(float2(coord.x, coord.y * ScreenSize.w), float2(sunPos.x, sunPos.y * ScreenSize.w));
            glow         = pow(glow, glowCurve);
            glow        += triDither(glow, coord, Timer.x, 8); //clean up a bit
 
-           if(enableSunGlow && !EInteriorFactor)
+           if(enableSunGlow && !EInteriorFactor && SunDirection.z > 0.0)
            color        = BlendScreenHDR(color, (glow * sunOpacity * glowStrength * glowTint));
 
     return color;
@@ -172,9 +171,20 @@ float4 PS_FXAA(VS_OUTPUT IN) : SV_Target
     return enableFxaa ? FXAA(TextureColor, IN.txcoord.xy) : TextureColor.Sample(PointSampler, IN.txcoord.xy);
 }
 
-float PS_MaskSky(VS_OUTPUT IN) : SV_Target
+float3 PS_Test(VS_OUTPUT IN,  float4 v0 : SV_Position0) : SV_Target
 {
-    return floor(getLinearizedDepth(IN.txcoord.xy));
+    float2 coord    = IN.txcoord.xy;
+    float4 ambient  = TextureMask.Sample(PointSampler, coord);
+    float4 normals  = TextureNormal.Sample(LinearSampler, coord);
+
+
+    // float  topLight     = dot(normals.y, lightTop);
+    // float  botLight     = dot(1 - normals.y, lightBot);
+    // float  rightLight   = dot(normals.x, lightRight);
+    // float  leftLight    = dot(normals.z, lightLeft);
+
+
+    return 0; //topLight + botLight + rightLight + leftLight;
 }
 
 // down and updsampling does wonders for Blurring
@@ -207,12 +217,12 @@ float3	PS_Resample(VS_OUTPUT IN, uniform bool upsample) : SV_Target
 // Techniques                                       //
 //==================================================//
 
-technique11 pre <string RenderTarget="RenderTargetR16F"; string UIName="Nordwind Prepass";>
+technique11 pre <string UIName="Nordwind Prepass";>
 {
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_MaskSky()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(false)));
     }
 }
 
@@ -239,7 +249,7 @@ technique11 pre3
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_Resample(false)));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(true)));
     }
 }
 
@@ -266,7 +276,7 @@ technique11 pre6
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_Resample(true)));
+        SetPixelShader (CompileShader(ps_5_0, PS_Color()));
     }
 }
 
@@ -275,20 +285,11 @@ technique11 pre7
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_Color()));
-    }
-}
-
-technique11 pre8
-{
-    pass p0
-    {
-        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
         SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
     }
 }
 
-technique11 pre9
+technique11 pre8
 {
     pass p0
     {
@@ -299,12 +300,12 @@ technique11 pre9
 
 
 // SMAA pases
-technique11 smaa <string RenderTarget="RenderTargetR16F"; string UIName="Nordwind + SMAA";>
+technique11 smaa <string UIName="Nordwind + SMAA";>
 {
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_MaskSky()));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(false)));
     }
 }
 
@@ -331,7 +332,7 @@ technique11 smaa3
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_Resample(false)));
+        SetPixelShader (CompileShader(ps_5_0, PS_Resample(true)));
     }
 }
 
@@ -358,7 +359,7 @@ technique11 smaa6
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_Resample(true)));
+        SetPixelShader (CompileShader(ps_5_0, PS_Color()));
     }
 }
 
@@ -367,7 +368,7 @@ technique11 smaa7
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_Color()));
+        SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
     }
 }
 
@@ -376,20 +377,11 @@ technique11 smaa8
     pass p0
     {
         SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-        SetPixelShader (CompileShader(ps_5_0, PS_FXAA()));
-    }
-}
-
-technique11 smaa9
-{
-    pass p0
-    {
-        SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
         SetPixelShader (CompileShader(ps_5_0, PS_Sharpening()));
     }
 }
 
-technique11 smaa10 <string RenderTarget= SMAA_STRING(SMAA_EDGE_TEX);>
+technique11 smaa9 <string RenderTarget= SMAA_STRING(SMAA_EDGE_TEX);>
 {
     pass Clear
     {
@@ -404,7 +396,7 @@ technique11 smaa10 <string RenderTarget= SMAA_STRING(SMAA_EDGE_TEX);>
     }
 }
 
-technique11 smaa11 <string RenderTarget=SMAA_STRING(SMAA_BLEND_TEX);>
+technique11 smaa10 <string RenderTarget=SMAA_STRING(SMAA_BLEND_TEX);>
 {
     pass Clear
     {
@@ -419,7 +411,7 @@ technique11 smaa11 <string RenderTarget=SMAA_STRING(SMAA_BLEND_TEX);>
     }
 }
 
-technique11 smaa12
+technique11 smaa11
 {
     pass NeighborhoodBlending
     {

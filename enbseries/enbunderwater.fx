@@ -38,33 +38,44 @@ Texture2D			RenderTargetRGB32F;  //32 bit hdr format without alpha
 
 float4	TintColor; //xyz - tint color; w - tint amount
 
-UI_FLOAT(fogDensity,             " Underwater Fog Density",    0.0, 10.0, 0.0)
-UI_FLOAT(nearPlane,              "  near Plane",               0.0, 10.0, 0.0)
-UI_FLOAT(farPlane,               "  far Plane",                0.0, 10.0, 1.0)
+UI_FLOAT(fogDensity,            "| Underwater Fog Density",    	0.0, 10.0, 0.0)
+UI_FLOAT(nearPlane,          	"| Fog Distance",              	0.0, 10.0, 1.0)
+UI_FLOAT(farPlane,           	"| Fog Start",                 	0.0, 10.0, 0.0)
 
-float3	PS_Prepass(VS_OUTPUT IN) : SV_Target
+
+UI_FLOAT(displacementSpeed,     "| Displacement Speed",         0.0, 10.0, 1.0)
+UI_FLOAT(displacementOffset,    "| Displacement Offset",         0.0, 10.0, 1.0)
+
+
+float3	PS_Color(VS_OUTPUT IN) : SV_Target
 {
-    float2 coord    = IN.txcoord.xy;
-    float3 Color    = TextureColor.Sample(PointSampler, coord);
+	float2 coord    = IN.txcoord.xy;
+
+	// Displacement
+    float offset = (Timer.x) * 16777216 * 3.14159 * displacementSpeed;    
+    coord.x += sin(coord.y * 3.14159 * displacementOffset + offset) / 200.0;
+
+	float3 color    = TextureColor.Sample(PointSampler, coord);
+	float4 mask     = TextureMask.Sample(PointSampler, coord);
     //clip(Color); // i hoped this would be a good workaround for the Letterbox issue. Does not work tho
 
-	float  	Luma     = GetLuma(Color, Rec709);
-	float4 	Mask     = TextureMask.Sample(LinearSampler, coord);
-	float  	Depth    = getLinearizedDepth(coord);
-	float  	Map      = (1 - saturate((Depth - nearPlane) / (farPlane - nearPlane))) * Mask.x;
-		   	Color    = lerp(BlendScreenHDR(Color, TintColor.rgb * TintColor.a), Color, exp(-fogDensity * Map));
+	float  	luma     = GetLuma(color, Rec709);
 
-			Color    = 1 - exp(-Color);
+	float  	depth    = getLinearizedDepth(coord);
+	float  	fogPlane = (1 - saturate((depth - nearPlane) / (farPlane - nearPlane))) * mask.x;
+		   	color    = lerp(BlendScreenHDR(color, TintColor.rgb * TintColor.a), color, exp(-fogDensity * fogPlane));
 
-	return 	Color;
+			color    = 1 - exp(-color);
+
+	return 	mask;
 }
 
 // TECHNIQUES
-technique11 Open <string UIName="Underwater";>
+technique11 Water <string UIName="Underwater";>
 {
-  pass p0
-  {
-    SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-    SetPixelShader (CompileShader(ps_5_0, PS_Prepass()));
-  }
+	pass p0
+  	{
+    	SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+    	SetPixelShader (CompileShader(ps_5_0, PS_Color()));
+  	}
 }

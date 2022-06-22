@@ -12,27 +12,27 @@
 //=============================================//
 // Textures                                    //
 //=============================================//
-Texture2D           TextureDepth;
-Texture2D           TextureColor;
-Texture2D			TextureDownsampled;  //color R16B16G16A16 64 bit or R11G11B10 32 bit hdr format. 1024*1024 size
-Texture2D			RenderTarget1024;    //R16B16G16A16F 64 bit hdr format, 1024*1024 size
-Texture2D			RenderTarget512;     //R16B16G16A16F 64 bit hdr format, 512*512 size
-Texture2D			RenderTarget256;     //R16B16G16A16F 64 bit hdr format, 256*256 size
-Texture2D			RenderTarget128;     //R16B16G16A16F 64 bit hdr format, 128*128 size
-Texture2D			RenderTarget64;      //R16B16G16A16F 64 bit hdr format, 64*64 size
-Texture2D			RenderTarget32;      //R16B16G16A16F 64 bit hdr format, 32*32 size
-Texture2D			RenderTarget16;      //R16B16G16A16F 64 bit hdr format, 16*16 size
+Texture2D   TextureDepth;
+Texture2D   TextureColor;
+Texture2D   TextureDownsampled;  //color R16B16G16A16 64 bit or R11G11B10 32 bit hdr format. 1024*1024 size
+Texture2D   RenderTarget1024;    //R16B16G16A16F 64 bit hdr format, 1024*1024 size
+Texture2D   RenderTarget512;     //R16B16G16A16F 64 bit hdr format, 512*512 size
+Texture2D   RenderTarget256;     //R16B16G16A16F 64 bit hdr format, 256*256 size
+Texture2D   RenderTarget128;     //R16B16G16A16F 64 bit hdr format, 128*128 size
+Texture2D   RenderTarget64;      //R16B16G16A16F 64 bit hdr format, 64*64 size
+Texture2D   RenderTarget32;      //R16B16G16A16F 64 bit hdr format, 32*32 size
+Texture2D   RenderTarget16;      //R16B16G16A16F 64 bit hdr format, 16*16 size
 
-Texture2D			RenderTargetRGBA32;  // R8G8B8A8 32 bit ldr format
-Texture2D			RenderTargetRGBA64;  // R16B16G16A16 64 bit ldr format
-Texture2D			RenderTargetRGBA64F; // R16B16G16A16F 64 bit hdr format
-Texture2D			RenderTargetR16F;    // R16F 16 bit hdr format with red channel only
-Texture2D			RenderTargetR32F;    // R32F 32 bit hdr format with red channel only
-Texture2D			RenderTargetRGB32F;  // 32 bit hdr format without alpha
+Texture2D   RenderTargetRGBA32;  // R8G8B8A8 32 bit ldr format
+Texture2D   RenderTargetRGBA64;  // R16B16G16A16 64 bit ldr format
+Texture2D   RenderTargetRGBA64F; // R16B16G16A16F 64 bit hdr format
+Texture2D   RenderTargetR16F;    // R16F 16 bit hdr format with red channel only
+Texture2D   RenderTargetR32F;    // R32F 32 bit hdr format with red channel only
+Texture2D   RenderTargetRGB32F;  // 32 bit hdr format without alpha
 
-Texture2D           lensDirt1           <string ResourceName="Include/Textures/lensdirt1.jpg"; >;
-Texture2D           lensDirt2           <string ResourceName="Include/Textures/lensdirt2.jpg"; >;
-Texture2D           lensDirt3           <string ResourceName="Include/Textures/lensdirt3.jpg"; >;
+Texture2D   lensDirt1           <string ResourceName="Include/Textures/lensdirt1.jpg"; >;
+Texture2D   lensDirt2           <string ResourceName="Include/Textures/lensdirt2.jpg"; >;
+Texture2D   lensDirt3           <string ResourceName="Include/Textures/lensdirt3.jpg"; >;
 
 //=============================================//
 // Internals                                   //
@@ -52,7 +52,7 @@ UI_FLOAT(softThreshold,         " Soft Threshold",          0.0, 1.0, 0.1)
 UI_FLOAT(removeSky,             " Mask out Sky",            0.0, 1.0, 0.3)
 UI_WHITESPACE(1)
 UI_MESSAGE(2,                   "----- Color -----")
-UI_FLOAT(bloomPower,            " Intensity",               0.1, 5.0, 0.5)
+UI_FLOAT(bloomIntensity,        " Intensity",              -5.0, 5.0, 0.0)
 UI_FLOAT(bloomSaturation,       " Saturation",              0.0, 3.0, 1.0)
 UI_FLOAT3(bloomTint,            " Tint",                    1.0, 1.0, 1.0)
 UI_BOOL(tonemapOutput,          " Tonemap output",	        false)
@@ -61,22 +61,19 @@ UI_MESSAGE(3,                   "----- Shape -----")
 UI_INT(bloomSize,               " Samples",                 4.0, 32.0, 8.0)
 UI_FLOAT(sigma,                 " Sigma",                   0.1, 5.0, 1.0)
 UI_WHITESPACE(3)
-UI_MESSAGE(4,                   "----- Adaptation -----")
+UI_MESSAGE(5,                   "----- Adaptation -----")
 UI_BOOL(enableAdaptation,       " Enable Adaptation",       false)
 UI_INT(adaptationSamples,       "  Adaptation Samples",     2.0, 100.0, 8.0)
 UI_FLOAT(adaptationImpact,      "  Adaptation Impact",      0.0, 100.0, 1.0)
 UI_FLOAT(minAdaptation,         "  Min Adaptation",         0.0, 10.0, 0.0)
 UI_FLOAT(maxAdaptation,         "  Max Adaptation",         0.0, 10.0, 1.0)
-UI_WHITESPACE(4)
-UI_MESSAGE(5,                   "----- Lens Dirt -----")
+UI_WHITESPACE(5)
+UI_MESSAGE(6,                   "----- Lens Dirt -----")
 UI_BOOL(enableLensDirt,         " Enable Lens Dirt",	    false)
 UI_INT(selectedDirt,            "  Select Dirt Texture",    0.0, 2.0, 0.0)
 UI_FLOAT(dirtIntensity,         "  Dirt Intensity",         0.0, 2.0, 0.5)
 UI_FLOAT(dirtSpread,            "  Dirt Spread",            0.3, 2.0, 1.0)
 UI_FLOAT3(dirtTint,             "  Dirt Tint",              0.5, 0.5, 0.5)
-
-
-
 
 //=============================================//
 // Functions                                   //
@@ -109,20 +106,20 @@ float4 simpleBlur(Texture2D inputTex, float2 coord, float2 pixelsize)
 }
 
 // https://danielilett.com/2019-05-08-tut1-3-smo-blur/
-static const float two_pi = 6.28319;
+static const float twoPi = 6.28319;
 static const float E = 2.71828;
 
 float gaussian(int x)
 {
     float sigmaSquared = sigma * sigma * 2; // why 2x? it looks way to small otherwise
-    return (1 / sqrt(two_pi * sigmaSquared)) * pow(E, -(x * x) / (2 * sigmaSquared));
+    return (1 / sqrt(twoPi * sigmaSquared)) * pow(E, -(x * x) / (2 * sigmaSquared));
 }
 
-// A second time for the single pass blur
-float singleGaussian(int x, int y)
+// A second time for x and y
+float gaussian(int x, int y)
 {
     float sigmaSquared = sigma * sigma;
-    return (1 / sqrt(two_pi * sigmaSquared)) * pow(E, -((x * x) + (y * y)) / (2 * sigmaSquared));
+    return (1 / sqrt(twoPi * sigmaSquared)) * pow(E, -((x * x) + (y * y)) / (2 * sigmaSquared));
 }
 
 float3 singlePassGaussian(uniform Texture2D inputTex, float2 pixelSize, float2 uv)
@@ -135,11 +132,11 @@ float3 singlePassGaussian(uniform Texture2D inputTex, float2 pixelSize, float2 u
     {
         for (int y = lower; y <= upper; ++y)
         {
-            float gauss = singleGaussian(x, y);
-            kernelSum += gauss;
+            float gauss = gaussian(x, y);
+            kernelSum  += gauss;
 
             float2 offset = float2(pixelSize.x * x, pixelSize.y * y);
-            color += inputTex.Sample(LinearSampler, uv + offset) * gauss;
+                   color += inputTex.Sample(LinearSampler, uv + offset) * gauss;
         }
     }
     return color / kernelSum;
@@ -180,26 +177,26 @@ float3  PS_Upsample(VS_OUTPUT IN, uniform Texture2D InputTex, uniform float texs
 // For mutipass blur
 float3  PS_BlurH(VS_OUTPUT IN, uniform Texture2D InputTex, uniform float texsize) : SV_Target
 {
-    int upper = (bloomSize - 1) * 0.5;
-    int lower = -upper;
-    float2 pixelSize = getPixelSize(texsize);
-    float kernelSum = 0.0;
+    int     upper = (bloomSize - 1) * 0.5;
+    int     lower = -upper;
+    float2  pixelSize = getPixelSize(texsize);
+    float   kernelSum = 0.0;
     float3 color;
     for (int x = lower; x <= upper; ++x)
     {
         float gauss = gaussian(x);
-        kernelSum += gauss;
-        color += InputTex.Sample(LinearSampler, IN.txcoord.xy + float2(pixelSize.x * x, 0.0)) * gauss;
+        kernelSum   += gauss;
+        color       += InputTex.Sample(LinearSampler, IN.txcoord.xy + float2(pixelSize.x * x, 0.0)) * gauss;
     }
     return color / kernelSum;
 }
 
 float3  PS_BlurV(VS_OUTPUT IN, uniform Texture2D InputTex, uniform float texsize) : SV_Target
 {
-    int upper = (bloomSize - 1) * 0.5;
-    int lower = -upper;
+    int upper   = (bloomSize - 1) * 0.5;
+    int lower   = -upper;
     float2 pixelSize = getPixelSize(texsize);
-    float kernelSum = 0.0;
+    float kernelSum  = 0.0;
     float3 color;
     for (int y = lower; y <= upper; ++y)
     {
@@ -213,19 +210,20 @@ float3  PS_BlurV(VS_OUTPUT IN, uniform Texture2D InputTex, uniform float texsize
 float3  PS_BloomMix(VS_OUTPUT IN) : SV_Target
 {
     float2 coord  = IN.txcoord.xy;
-    float4 bloom  = simpleBlur(RenderTarget1024, coord, getPixelSize(1024));
-           bloom += simpleBlur(RenderTarget512,  coord, getPixelSize(512));
-           bloom += simpleBlur(RenderTarget256,  coord, getPixelSize(256));
-           bloom += simpleBlur(RenderTarget128,  coord, getPixelSize(128));
-           bloom += simpleBlur(RenderTarget64,   coord, getPixelSize(64));
-           bloom += simpleBlur(RenderTarget32,   coord, getPixelSize(32));
-           bloom += simpleBlur(RenderTarget16,   coord, getPixelSize(16));
-    return bloom * 0.142857; // Normalize  1/7 = 0.1428571428571429
+    float3 bloom  = 1;
+           bloom  = simpleBlur(RenderTarget1024, coord, getPixelSize(1024)) * (1 - sqrt(bloom));
+           bloom += simpleBlur(RenderTarget512,  coord, getPixelSize(512))  * (1 - sqrt(bloom));
+           bloom += simpleBlur(RenderTarget256,  coord, getPixelSize(256))  * (1 - sqrt(bloom));
+           bloom += simpleBlur(RenderTarget128,  coord, getPixelSize(128))  * (1 - sqrt(bloom));
+           bloom += simpleBlur(RenderTarget64,   coord, getPixelSize(64))   * (1 - sqrt(bloom));
+           bloom += simpleBlur(RenderTarget32,   coord, getPixelSize(32))   * (1 - sqrt(bloom));
+           bloom += simpleBlur(RenderTarget16,   coord, getPixelSize(16))   * (1 - sqrt(bloom)); 
+    return bloom; // Normalize  1/7 = 0.1428571428571429
 }
 
 float	PS_CalcAvgLuma(VS_OUTPUT IN) : SV_Target
 {
-    if (!enableAdaptation) discard;
+    if (!enableAdaptation) return 0;
 
     float Luma = 0;
     for (int x = 0; x < adaptationSamples; x++)
@@ -246,8 +244,7 @@ float3  PS_Postpass(VS_OUTPUT IN) : SV_Target
     float  avgLuma  = RenderTargetRGBA32.Load(int3(0, 0, 0));
            avgLuma  = clamp(avgLuma, minAdaptation, maxAdaptation);
 
-
-           color    =ldexp(color, bloomPower - (avgLuma * adaptationImpact));
+           color   *= exp2(bloomIntensity - (avgLuma * adaptationImpact));
 
     if (tonemapOutput)
     color = 1 - exp(-color);
