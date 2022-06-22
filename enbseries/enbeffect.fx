@@ -181,7 +181,7 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
 
     // Color edits
             Color        = ldexp(Color, Exposure + agcc_brightness - (Adapt * adaptImapct)); // exposure
-            Color        = frostbyteTonemap(Color, agcc_saturation);
+            Color        = frostbyteTonemap(Color, saturate(agcc_saturation * 0.75));
             Color        = pow(Color, (Gamma - RGBGamma) + 0.5 + agcc_contrast);
     float   Luma         = saturate(GetLuma(Color, Rec709)); // saturate here cuz the WhiteBalance shader has issues with higher values than 1
             Color        = saturate(ChangeWhiteBalance(Color, Luma, ColorTemperature));
