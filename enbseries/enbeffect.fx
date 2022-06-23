@@ -64,16 +64,29 @@ UI_FLOAT_DNI(Resaturation,          " Resaturation",        0.0, 2.0, 0.0)
 UI_FLOAT_DNI(HueShift,              " Hue Shift",           0.0, 1.0, 1.0)
 UI_FLOAT(adaptImapct,               " Adaptation Impact",   0.0, 8.0, 1.0)
 UI_WHITESPACE(2)
+#define UI_CATEGORY AISS
+UI_SEPARATOR
+UI_FLOAT(isSatImpact,               " Saturation Impact",   0.0, 3.0, 1.0)
+UI_FLOAT(isMinSat,                  " Min Saturation",      0.0, 3.0, 0.0)
+UI_FLOAT(isMaxSat,                  " Max Saturation",      0.0, 3.0, 1.0)
+UI_FLOAT(isConImpact,               " Contrast Impact",     0.0, 3.0, 1.0)
+UI_FLOAT(isMinCon,                  " Min Contrast",        0.0, 3.0, 0.0)
+UI_FLOAT(isMaxCon,                  " Max Contrast",        0.0, 3.0, 1.0)
+UI_FLOAT(isBriImpact,               " Brightness Impact",   0.0, 3.0, 1.0)
+UI_FLOAT(isMinBri,                  " Min Brightness",      0.0, 3.0, 0.0)
+UI_FLOAT(isMaxBri,                  " Max Brightness",      0.0, 3.0, 1.0)
+UI_FLOAT(isMinTintCol,              " Min Tint Color",      0.0, 1.0, 0.0)
+UI_FLOAT(isMaxTintCol,              " Max Tint Color",      0.0, 1.0, 1.0)
+UI_FLOAT(isTintImpact,              " Tint Impact",         0.0, 3.0, 1.0)
+UI_FLOAT(isMinTint,                 " Min Tint",            0.0, 3.0, 0.0)
+UI_FLOAT(isMaxTint,                 " Max Tint",            0.0, 3.0, 1.0)
+UI_WHITESPACE(3)
 #define UI_CATEGORY Debug
 UI_SEPARATOR
 UI_BOOL(showBloom,                  " Show Bloom Texture",      false)
 UI_BOOL(showLens,                   " Show Lens Texture",       false)
 UI_BOOL(showAdapt,                  " Show Adaptation Level",   false)
-UI_BOOL(agccTint,                   " Enable AGCC Tinting ",    false)
-UI_BOOL(agccFade,                   " Enable AGCC Fade",        false)
 
-
-UI_FLOAT(testval,                   " Test",                0.0, 5.0, 1.0)
 //==================================================//
 // Functions                                        //
 //==================================================//
@@ -170,27 +183,25 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
             Color       += Bloom / (1 + Color);     // Mix bloom
             Color       += Lens * ENBParams01.y;    // Mix Lens
 
-    // AGCC values
-    float   agcc_saturation  = Params01[3].x;   // 0 == gray scale
-    float   agcc_contrast    = Params01[3].z;   // 0 == no contrast
-    float   agcc_brightness  = Params01[3].w;   // intensity
-    float3  agcc_tint_color  = Params01[4].rgb; // tint color
-    float   agcc_tint_weight = Params01[4].w;   // 0 == no tint
-    float3  agcc_fade        = Params01[5].xyz; // fade current scene to specified color, mostly used in special effects
-    float   agcc_fade_weight = Params01[5].w;   // 0 == no fade
+    // AISS (Ady's imagespace Spagetti. Ty Kitsuune for that name ;)
+    // imagespace(is) values from weather
+    float   isSat       = clamp(Params01[3].x * isSatImpact, isMinSat, isMaxSat);   // 0 == gray scale
+    float   isCon       = clamp(Params01[3].z * isConImpact, isMinCon, isMaxCon);   // 0 == no contrast
+    float   isBri       = clamp(Params01[3].w * isBriImpact, isMinBri, isMaxBri);   // intensity
+    float3  isTintCol   = clamp(Params01[4].rgb, isMinTintCol, isMaxTintCol);       // tint color
+    float   isTintUse   = clamp(Params01[4].w * isTintImpact, isMinTint, isMaxTint);// 0 == no tint
+    float3  isFadeCol   = Params01[5].xyz;                                          // fade current scene to specified color, mostly used in special effects
+    float   isFadeUse   = Params01[5].w;                                            // 0 == no fade
 
     // Color edits
-            Color        = ldexp(Color, Exposure + agcc_brightness - (Adapt * adaptImapct)); // exposure
-            Color        = frostbyteTonemap(Color, saturate(agcc_saturation * 0.75));
-            Color        = pow(Color, (Gamma - RGBGamma) + 0.5 + agcc_contrast);
+            Color        = ldexp(Color, Exposure + isBri - (Adapt * adaptImapct)); // exposure
+            Color        = frostbyteTonemap(Color, isSat);
+            Color        = pow(Color, (Gamma - RGBGamma) + 0.5 + isCon);
     float   Luma         = saturate(GetLuma(Color, Rec709)); // saturate here cuz the WhiteBalance shader has issues with higher values than 1
             Color        = saturate(ChangeWhiteBalance(Color, Luma, ColorTemperature));
 
-            if(agccTint)
-            Color        = lerp(Color, Luma * agcc_tint_color, agcc_tint_weight);
-
-            if(agccFade)
-            Color        = lerp(Color, agcc_fade, agcc_fade_weight);
+            Color        = lerp(Color, Luma * isTintCol, isTintUse);
+            Color        = lerp(Color, isFadeCol, isFadeUse);
 
     return saturate(Color + triDither(Color, coord, Timer.x, 16));
 }
