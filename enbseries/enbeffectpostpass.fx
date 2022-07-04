@@ -44,7 +44,6 @@ Texture2D		RenderTargetRGB32F;  //32 bit hdr format without alpha
 //==================================================//
 // UI                                       		//
 //==================================================//
-UI_WHITESPACE(1)
 UI_MESSAGE(2,                     	"|----- Camera Effects -----")
 UI_BOOL(enableDistortion,           "| Enable Lens Distortion",   	false)
 UI_INT(lensDistortion,              "|  Distortion Amount",       	-100, 100, 0)
@@ -61,12 +60,16 @@ UI_FLOAT(RadialCA,                  "|  Aberration Strength",      	0.0, 2.5, 1.
 UI_FLOAT(barrelPower,               "|  Aberration Curve",         	0.0, 2.5, 1.0)
 UI_WHITESPACE(5)
 UI_BOOL(enableLetterbox,            "| Enable Letterbox",	    	false)
-UI_FLOAT(hBoxSize,                  "| 	Horizontal Size",			-0.5, 0.5, 0.1)
-UI_FLOAT(vBoxSize,                  "| 	Vertical Size",          	-0.5, 0.5, 0.0)
-UI_FLOAT(BoxRotation,               "| 	Letterbox Rotation",	    0.0, 6.0, 0.0)
-UI_FLOAT3(BoxColor,                 "| 	Letterbox Color",         	0.0, 0.0, 0.0)
-UI_FLOAT(LetterboxDepth,            "| 	Letterbox Distance",      	0.0, 10.0, 0.0)
+UI_FLOAT(hBoxSize,                  "|  Horizontal Size",			-0.5, 0.5, 0.1)
+UI_FLOAT(vBoxSize,                  "|  Vertical Size",          	-0.5, 0.5, 0.0)
+UI_FLOAT(BoxRotation,               "|  Letterbox Rotation",	    0.0, 6.0, 0.0)
+UI_FLOAT3(BoxColor,                 "|  Letterbox Color",         	0.0, 0.0, 0.0)
+UI_FLOAT(LetterboxDepth,            "|  Letterbox Distance",      	0.0, 10.0, 0.0)
 UI_WHITESPACE(6)
+UI_BOOL(enableCAS,                  "| Enable Contrast Adaptive Sharpening", false)
+UI_FLOAT(casContrast,               "|  Sharpening Contrast",      	0.0, 1.0, 0.0)
+UI_FLOAT(casSharpening,             "|  Sharpening Amount",     	0.0, 1.0, 1.0)
+UI_WHITESPACE(7)
 UI_MESSAGE(3,                       "|----- Color -----")
 UI_MESSAGE(4,                       "| Image Saturation:")
 UI_FLOAT(vibrance,                  "|  Vibrance",              	-1.0, 1.0, 0.10)
@@ -79,7 +82,7 @@ UI_FLOAT(sat_a,                     "|  Aqua Saturation",        	-3.0, 3.0, 0.0
 UI_FLOAT(sat_b,                     "|  Blue Saturation",          	-3.0, 3.0, 0.0)
 UI_FLOAT(sat_p,                     "|  Purple Saturation",        	-3.0, 3.0, 0.0)
 UI_FLOAT(sat_m,                     "|  Magenta Saturation",       	-3.0, 3.0, 0.0)
-UI_WHITESPACE(7)
+UI_WHITESPACE(8)
 UI_MESSAGE(5,                       "| Image Luminance:")
 UI_FLOAT(exposure,                  "|  Exposure",                 	-2.0, 2.0, 0.0)
 UI_FLOAT(contrast,                  "|  Contrast",	             	-1.0, 1.0, 0.0)
@@ -88,47 +91,46 @@ UI_FLOAT(inputWhitePoint,           "|  Level Input Whitepoint",	0.0, 2.0, 1.0)
 UI_FLOAT(inputBlackPoint,           "|  Level Input Blackpoint",	0.0, 2.0, 0.0)
 UI_FLOAT(outputWhitePoint,          "|  Level Output Whitepoint",	0.0, 2.0, 1.0)
 UI_FLOAT(outputBlackPoint,          "|  Level Output Blackpoint",	0.0, 2.0, 0.0)
-UI_WHITESPACE(8)
+UI_WHITESPACE(9)
 UI_MESSAGE(6,                       "| Curve Settings:")
 UI_BOOL(showCurveGraph,             "|  Show Curve Graph",          false)
 UI_INT(grapthSize,               	"|  Graph Box Size",            128.0, 1024.0, 512.0)
 UI_BOOL(curveScreenBlend,           "|  Screen Blend Curves",      	false)
 UI_FLOAT(chromaShift,               "|  Shift Chroma range",        0.0, 1.0, 0.1)
-UI_WHITESPACE(9)
+UI_WHITESPACE(10)
 UI_MESSAGE(7,                       "| Luminance Curve:")
 UI_FLOAT(CurveBlendL,               "|  Luma Curve Power",     		0.0, 1.0, 0.0)
 UI_FLOAT(LSP,                       "|  Luma Curve Startpoint",		-1.0, 1.0, 0.0)
 UI_FLOAT(LCP1,                      "|  Luma Curve Lower End",		-5.0, 5.0, 0.35)
 UI_FLOAT(LCP2,                      "|  Luma Curve Upper End", 		-5.0, 5.0, 0.65)
 UI_FLOAT(LEP,                       "|  Luma Curve End Point",    	0.0, 2.0, 1.0)
-UI_WHITESPACE(10)
+UI_WHITESPACE(11)
 UI_MESSAGE(8,                       "| Red Curve:")
 UI_FLOAT(CurveBlendR,               "|  Red Curve Power",         	0.0, 1.0, 0.0)
 UI_FLOAT(RSP,                       "|  Red Curve Startpoint",   	-1.0, 1.0, 0.0)
 UI_FLOAT(RCP1,                      "|  Red Curve Lower End", 		-5.0, 5.0, 0.35)
 UI_FLOAT(RCP2,                      "|  Red Curve Upper End", 		-5.0, 5.0, 0.65)
 UI_FLOAT(REP,                       "|  Red Curve End Point",     	0.0, 2.0, 1.0)
-UI_WHITESPACE(11)
+UI_WHITESPACE(12)
 UI_MESSAGE(9,                      	"| Green Curve:")
 UI_FLOAT(CurveBlendG,               "|  Green Curve Power",        	0.0, 1.0, 0.0)
 UI_FLOAT(GSP,                       "|  Green Curve Startpoint",  	-1.0, 1.0, 0.0)
 UI_FLOAT(GCP1,                      "|  Green Curve Lower End",   	-5.0, 5.0, 0.35)
 UI_FLOAT(GCP2,                      "|  Green Curve Upper End",   	-5.0, 5.0, 0.65)
 UI_FLOAT(GEP,                       "|  Green Curve End Point",    	0.0, 2.0, 1.0)
-UI_WHITESPACE(12)
+UI_WHITESPACE(13)
 UI_MESSAGE(10,                      "| Blue Curve:")
 UI_FLOAT(CurveBlendB,               "|  Blue Curve Power",       	0.0, 1.0, 0.0)
 UI_FLOAT(BSP,                       "|  Blue Curve Startpoint",  	-1.0, 1.0, 0.0)
 UI_FLOAT(BCP1,                      "|  Blue Curve Lower End",  	-5.0, 5.0, 0.35)
 UI_FLOAT(BCP2,                      "|  Blue Curve Upper End",   	-5.0, 5.0, 0.65)
 UI_FLOAT(BEP,                       "|  Blue Curve End Point",   	0.0, 2.0, 1.0)
-UI_WHITESPACE(13)
+UI_WHITESPACE(14)
 UI_MESSAGE(11,                      "| Channel Isolation:")
 UI_FLOAT_FINE(hueMid,           	"|  Hue Selection ",          	0.0, 1.0, 0.0, 0.001)
 UI_FLOAT(hueRange,          	    "|  Hue Range ",               	0.0, 1.0, 0.1)
 UI_FLOAT(satLimit,        			"|  Saturation Limit",         	0.0, 1.0, 1.0)
 UI_FLOAT(fxcolorMix,        	    "|  Mix Isolated Color",       	0.0, 1.0, 0.1)
-
 
 //==================================================//
 // Functions                                		//
@@ -143,6 +145,7 @@ UI_FLOAT(fxcolorMix,        	    "|  Mix Isolated Color",       	0.0, 1.0, 0.1)
 //#include "Include/Shaders/sharpening.fxh" //moved to prepass to mask out Skin
 #include "Include/Shaders/colorIsolation.fxh"
 #include "Include/Shaders/curve.fxh"
+#include "Include/Shaders/cas.fxh"
 
 //==================================================//
 // Pixel Shaders                            		//
@@ -221,6 +224,11 @@ float3 PS_LensCA(VS_OUTPUT IN) : SV_Target
     return enableCA ? LensCA(IN.txcoord.xy) : TextureColor.Sample(PointSampler, IN.txcoord.xy);
 }
 
+float3 PS_CAS(VS_OUTPUT IN) : SV_Target
+{
+	return enableCAS ? CASsharpening(IN.txcoord.xy) : TextureColor.Sample(PointSampler, IN.txcoord.xy);
+}
+
 //==================================================//
 // Techniques                               		//
 //==================================================//
@@ -262,6 +270,15 @@ technique11 post3
 }
 
 technique11 post4
+{
+	pass p0
+	{
+		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
+		SetPixelShader (CompileShader(ps_5_0, PS_CAS()));
+	}
+}
+
+technique11 post5
 {
 	pass p0
 	{
