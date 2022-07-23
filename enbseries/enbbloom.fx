@@ -246,7 +246,7 @@ float3  PS_Postpass(VS_OUTPUT IN) : SV_Target
     float  avgLuma  = RenderTargetRGBA32.Load(int3(0, 0, 0));
            avgLuma  = clamp(avgLuma, minAdaptation, maxAdaptation);
 
-           color   *= exp2(bloomIntensity - (avgLuma * adaptationImpact));
+           color   *= exp2(bloomIntensity - (avgLuma * adaptationImpact * enableAdaptation));
 
     if (tonemapOutput)
     color = 1 - exp(-color);
