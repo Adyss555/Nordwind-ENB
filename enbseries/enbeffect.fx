@@ -45,6 +45,7 @@ Texture2D RenderTargetRGB32F;   //32 bit hdr format without alpha
 #include "Include/Shared/ReforgedUI.fxh"
 #include "Include/Shared/Conversions.fxh"
 #include "Include/Shared/ictcp_colorspaces.fx"
+#include "Include/Shared/BlendingModes.fxh"
 
 //==================================================//
 // UI                                               //
@@ -86,6 +87,8 @@ UI_SEPARATOR
 UI_BOOL(showBloom,                  " Show Bloom Texture",      false)
 UI_BOOL(showLens,                   " Show Lens Texture",       false)
 UI_BOOL(showAdapt,                  " Show Adaptation Level",   false)
+UI_BOOL(altMixMode,                 " Alternate Bloom Mixing",  false)
+
 
 //==================================================//
 // Functions                                        //
@@ -179,8 +182,15 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
             if(showAdapt) return Adapt;
 
             // mix Bloom
-            Bloom        = Bloom * ENBParams01.x;
-            Color       += Bloom / (1 + Color);     // Mix bloom
+            if(!altMixMode) { // fast screen blend
+                Bloom        = Bloom * ENBParams01.x;
+                Color       += Bloom / (1 + Color);
+            } else {  // Hacky double blend
+                Color        = lerp(Color, Bloom, saturate(ENBParams01.x));
+                Color        = BlendScreenHDR(Color, Bloom * ENBParams01.x);
+
+            }
+
             Color       += Lens * ENBParams01.y;    // Mix Lens
 
     // AISS (Ady's imagespace Spagetti. Ty Kitsuune for that name ;)

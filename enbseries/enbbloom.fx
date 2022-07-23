@@ -46,6 +46,7 @@ Texture2D   lensDirt3           <string ResourceName="Include/Textures/lensdirt3
 // UI                                          //
 //=============================================//
 UI_MESSAGE(1,                   "----- Masking -----")
+UI_FLOAT(linearSlope,           " Linear Slope",            0.1, 5.0, 1.0)
 UI_FLOAT(bloomSensitivity,      " Sensitivity",             0.1, 3.0, 1.0)
 UI_FLOAT(threshold,             " Threshold",               0.0, 1.0, 0.1)
 UI_FLOAT(softThreshold,         " Soft Threshold",          0.0, 1.0, 0.1)
@@ -150,6 +151,7 @@ float3 singlePassGaussian(uniform Texture2D inputTex, float2 pixelSize, float2 u
 float3	PS_Prepass(VS_OUTPUT IN, uniform Texture2D InputTex) : SV_Target
 {
     float3  Color         = InputTex.Sample(LinearSampler, IN.txcoord.xy);
+            Color         = (exp(Color * Color) - 1) / (linearSlope * Color);
             Color         = pow(Color, bloomSensitivity);
     float   Luma          = max3(Color);
     float   Knee          = threshold * softThreshold;
