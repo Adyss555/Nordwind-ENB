@@ -51,7 +51,7 @@ Texture2D			RenderTargetRGB32F;  // 32 bit hdr format without alpha
 UI_MESSAGE(1,                   "|----- Fake HDR -----")
 UI_FLOAT(ShadowRange,           "|  Calibrate Shadow Range",    0.0, 1.0, 0.18)
 UI_FLOAT(LiftShadows,           "|  Lighten Shadows",           0.0, 1.0, 0.2)
-UI_FLOAT(shadowBlur,            "|  Blur Shadows",              0.0, 2.0, 0.1)
+UI_FLOAT(hdrGamma,              "|  HDR Gamma",                 0.0, 2.2, 1.0)
 UI_FLOAT(HDRTone,               "|  HDR Tone",                  0.0, 1.0, 0.0)
 UI_WHITESPACE(1)
 UI_MESSAGE(2,                   "|----- Atmosphere -----")
@@ -79,8 +79,10 @@ UI_WHITESPACE(4)
 UI_MESSAGE(5,                   "|----- Sun -----")
 UI_BOOL(enableSunGlow,          "| Enable Glow",                false)
 UI_FLOAT(glowStrength,          "|  Glow Strength",             0.1, 3.0, 1.0)
+UI_FLOAT(glowThreshold,         "|  Glow Threshold",            0.0, 1.0, 0.1)
 UI_FLOAT(glowCurve,             "|  Glow Curve",                0.1, 3.0, 1.0)
 UI_FLOAT3(glowTint,             "|  Glow Tint",                 0.5, 0.5, 0.5)
+UI_FLOAT(sunDarkening,          "|  Darken around Sun",         0.0, 1.0, 0.0)
 UI_WHITESPACE(5)
 UI_MESSAGE(6,                   "|----- AA -----")
 UI_BOOL(enableFxaa,             "| Enable FXAA",                false)
@@ -111,6 +113,13 @@ float getGlow(float2 uv, float2 pos)
     return 1.0 / (length(uv - pos) * 16.0 + 1.0);
 }
 
+// Output is 1 if looking directly at the sun. As soon as you move away from it, it gets lower. If the sun is not on the screen the output is 0;
+float getSunvisibility()
+{
+    return saturate(lerp(1, 0, distance(getSun(), float2(0.5, 0.5))));
+}
+
+
 //==================================================//
 // Pixel Shaders                                    //
 //==================================================//
@@ -134,14 +143,12 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
     // Calc Shadows and Hightlights and edit them
     float  Lo           = ShadowRange - saturate(min3(color));
            color        = lerp(color, lerp(color, max(color, ambient), Lo), LiftShadows);
-    //       color        = lerp(color, blur, saturate(pow(Lo, shadowBlur)));
-
-    // HDR Tone from Ansel
     float  luma         = GetLuma(color, Rec709);
     float  blurLuma     = GetLuma(blur, Rec709);
     float  sqrtLum 	    = sqrt(luma);
-    float  HDRToning    = sqrtLum * lerp(sqrtLum * (2 * luma * blurLuma - luma - 2 * luma + 2.0), (2 * sqrtLum * blurLuma - 2 * blurLuma + 1), luma > 0.5); //modified soft light v1
-      	   color        = color / (luma+1e-6) * lerp(luma, HDRToning, HDRTone);
+    float  dist         = log(1.0 + sqrtLum + (ambient * luma * blurLuma));
+    float3 hdr          = pow(color * dist, hdrGamma);
+           color        = lerp(color, hdr, HDRTone);
 
     // Atmosphere Shader by TreyM. Modified by Adyss
     float fogPlane      = (1 - saturate((depth - nearPlane) / (farPlane - nearPlane)));
@@ -155,12 +162,19 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
     // Sunglow Shader
     float2 sunPos       = getSun();
     float3 sunOpacity   = TextureColor.Sample(LinearSampler, sunPos);
+    float  sunVis       = getSunvisibility();
+    float  sunLuma      = max3(sunOpacity);
+           sunOpacity   = max(0, sunLuma - glowThreshold);
+           sunOpacity  /= max(sunLuma, 0.0001);
     float3 glow         = getGlow(float2(coord.x, coord.y * ScreenSize.w), float2(sunPos.x, sunPos.y * ScreenSize.w));
            glow         = pow(glow, glowCurve);
            glow        += triDither(glow, coord, Timer.x, 8); //clean up a bit
 
            if(enableSunGlow && !EInteriorFactor && SunDirection.z > 0.0)
-           color        = BlendScreenHDR(color, (glow * sunOpacity * glowStrength * glowTint));
+           {
+                color *= lerp(1, (1 - sunDarkening), sunVis * (sunVis * sunDarkening) - glow);
+                color  = BlendScreenHDR(color, (glow * sunOpacity * glowStrength * glowTint));
+           }
 
     return color;
 }
