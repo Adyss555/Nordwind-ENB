@@ -152,6 +152,7 @@ float3	PS_Prepass(VS_OUTPUT IN, uniform Texture2D InputTex) : SV_Target
 {
     float3  Color         = InputTex.Sample(LinearSampler, IN.txcoord.xy);
             Color         = (exp(Color * Color) - 1) / (linearSlope * Color);
+            //Color         = exp(log(Color) * linearSlope);
             Color         = pow(Color, bloomSensitivity);
     float   Luma          = max3(Color);
     float   Knee          = threshold * softThreshold;

@@ -65,6 +65,14 @@ UI_FLOAT_DNI(Resaturation,          " Resaturation",        0.0, 2.0, 0.0)
 UI_FLOAT_DNI(HueShift,              " Hue Shift",           0.0, 1.0, 1.0)
 UI_FLOAT(adaptImapct,               " Adaptation Impact",   0.0, 8.0, 1.0)
 UI_WHITESPACE(2)
+#define UI_CATEGORY Bloom
+UI_SEPARATOR
+UI_FLOAT(directBloomMix,            " Direct Bloom mix",    0.0, 1.0, 0.0)
+UI_FLOAT(lightSpreadThreshold,      " Bloom Spread Threshold", 0.0, 1.0, 0.0)
+UI_FLOAT(lightSpreadPower,          " Bloom Spread Power",  0.0, 1.0, 0.0)
+UI_FLOAT(glowThreshold,             " Bloom Glow Threshold",0.0, 1.0, 0.0)
+UI_FLOAT(glowPower,                 " Bloom Glow Power",    0.0, 1.0, 0.0)
+UI_WHITESPACE(3)
 #define UI_CATEGORY AISS
 UI_SEPARATOR
 UI_FLOAT(isSatImpact,               " Saturation Impact",   0.0, 3.0, 1.0)
@@ -81,7 +89,7 @@ UI_FLOAT(isMaxTintCol,              " Max Tint Color",      0.0, 1.0, 1.0)
 UI_FLOAT(isTintImpact,              " Tint Impact",         0.0, 3.0, 1.0)
 UI_FLOAT(isMinTint,                 " Min Tint",            0.0, 3.0, 0.0)
 UI_FLOAT(isMaxTint,                 " Max Tint",            0.0, 3.0, 1.0)
-UI_WHITESPACE(3)
+UI_WHITESPACE(4)
 #define UI_CATEGORY Debug
 UI_SEPARATOR
 UI_BOOL(showBloom,                  " Show Bloom Texture",      false)
@@ -176,22 +184,17 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
     float3  Lens         = TextureLens.Sample(LinearSampler, coord);
     float   Adapt        = TextureAdaptation.Load(int3(0, 0, 0));
 
+            // Mix Bloom and Lens
+            Color       = lerp(Color, Bloom, directBloomMix);
+            Bloom      += max(0.0, (Bloom.xyz - lightSpreadThreshold * 0.1) * lightSpreadPower * (1.0 - TextureBloom.Sample(LinearSampler, coord)));
+            Bloom      += max(0.0, (Bloom.xyz - glowThreshold * 0.1) * glowPower);
+            Color       = BlendScreenHDR(Color, Bloom * ENBParams01.x);
+            Color      += Lens * ENBParams01.y;    // Mix Lens
+
             //Debug
             if(showBloom) return Bloom;
             if(showLens)  return Lens;
             if(showAdapt) return Adapt;
-
-            // mix Bloom
-            if(!altMixMode) { // fast screen blend
-                Bloom        = Bloom * ENBParams01.x;
-                Color       += Bloom / (1 + Color);
-            } else {  // Hacky double blend
-                Color        = lerp(Color, Bloom, saturate(ENBParams01.x));
-                Color        = BlendScreenHDR(Color, Bloom * ENBParams01.x);
-
-            }
-
-            Color       += Lens * ENBParams01.y;    // Mix Lens
 
     // AISS (Ady's imagespace Spagetti. Ty Kitsuune for that name ;)
     // imagespace(is) values from weather
@@ -204,14 +207,14 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
     float   isFadeUse   = Params01[5].w;                                            // 0 == no fade
 
     // Color edits
-            Color        = ldexp(Color, Exposure + isBri - (Adapt * adaptImapct)); // exposure
-            Color        = frostbyteTonemap(Color, isSat);
-            Color        = pow(Color, (Gamma - RGBGamma) + 0.5 + isCon);
-    float   Luma         = saturate(GetLuma(Color, Rec709)); // saturate here cuz the WhiteBalance shader has issues with higher values than 1
-            Color        = saturate(ChangeWhiteBalance(Color, Luma, ColorTemperature));
+            Color       = ldexp(Color, Exposure + isBri - (Adapt * adaptImapct)); // exposure
+            Color       = frostbyteTonemap(Color, isSat);
+            Color       = pow(Color, (Gamma - RGBGamma) + 0.5 + isCon);
+    float   Luma        = saturate(GetLuma(Color, Rec709)); // saturate here cuz the WhiteBalance shader has issues with higher values than 1
+            Color       = saturate(ChangeWhiteBalance(Color, Luma, ColorTemperature));
 
-            Color        = lerp(Color, Luma * isTintCol, isTintUse);
-            Color        = lerp(Color, isFadeCol, isFadeUse);
+            Color       = lerp(Color, Luma * isTintCol, isTintUse);
+            Color       = lerp(Color, isFadeCol, isFadeUse);
 
     return saturate(Color + triDither(Color, coord, Timer.x, 16));
 }
