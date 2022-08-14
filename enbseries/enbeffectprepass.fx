@@ -48,12 +48,13 @@ Texture2D   RenderTargetRGB32F;  // 32 bit hdr format without alpha
 //==================================================//
 // UI                                               //
 //==================================================//
-UI_MESSAGE(1,                   "|----- Fake HDR -----")
+UI_MESSAGE(1,                   "|----- HDR -----")
 UI_FLOAT(ShadowRange,           "|  Calibrate Shadow Range",    0.0, 1.0, 0.18)
 UI_FLOAT(LiftShadows,           "|  Lighten Shadows",           0.0, 1.0, 0.2)
 UI_FLOAT(hdrCurve,              "|  HDR Curve",                 0.0, 2.2, 1.0)
 UI_FLOAT(hdrMix,                "|  HDR Balance",               0.0, 1.0, 0.5)
 UI_FLOAT(hdrStrength,           "|  HDR Mix",                   0.0, 1.0, 0.0)
+UI_FLOAT(desatShadows,          "|  Desaturate Shadows",        0.0, 1.0, 0.0)
 UI_WHITESPACE(1)
 UI_MESSAGE(2,                   "|----- Atmosphere -----")
 UI_BOOL(enableAtmosphere,       "| Enable Atmosphere",          false)
@@ -150,6 +151,11 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
     float3 contrast     = pow(color * hdrLuma, hdrCurve);
     float3 light        = pow(color / hdrLuma, hdrCurve);
            color        = lerp(color, max(lerp(light, contrast, hdrMix), 0.0), hdrStrength);
+    float  grey         = GetLuma(color, Rec709);
+           grey         = saturate(1.0 - grey);
+           grey        *= grey;
+           grey        *= grey;
+           color    	= lerp(color, luma, grey * desatShadows);
 
     // Atmosphere Shader by TreyM. Modified by Adyss
     float fogPlane      = (1 - saturate((depth - nearPlane) / (farPlane - nearPlane)));
