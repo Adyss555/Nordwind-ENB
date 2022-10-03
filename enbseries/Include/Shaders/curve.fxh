@@ -15,15 +15,18 @@ float3 curveCombine(float3 Color)
 	float3 Chroma  = Color.rgb - Luma;
 		   Chroma += chromaShift; // Shift up so we dont go below 0 here
 
+	if(chromaMode)
+	Color = Chroma;
+
     // Apply
-    Chroma.r = lerp(Chroma.r, cubicBezierCurve(Chroma.r, float4(RSP, RCP1, RCP2, REP)), CurveBlendR);  // Red
-    Chroma.g = lerp(Chroma.g, cubicBezierCurve(Chroma.g, float4(GSP, GCP1, GCP2, GEP)), CurveBlendG);  // Green
-	Chroma.b = lerp(Chroma.b, cubicBezierCurve(Chroma.b, float4(BSP, BCP1, BCP2, BEP)), CurveBlendB);  // Blue
-    Luma     = lerp(Luma,     cubicBezierCurve(Luma,     float4(LSP, LCP1, LCP2, LEP)), CurveBlendL);  // Luminace
+    Color.r = lerp(Color.r, cubicBezierCurve(Color.r, float4(RSP, RCP1, RCP2, REP)), CurveBlendR);  // Red
+    Color.g = lerp(Color.g, cubicBezierCurve(Color.g, float4(GSP, GCP1, GCP2, GEP)), CurveBlendG);  // Green
+	Color.b = lerp(Color.b, cubicBezierCurve(Color.b, float4(BSP, BCP1, BCP2, BEP)), CurveBlendB);  // Blue
+    Luma    = lerp(Luma,    cubicBezierCurve(Luma,    float4(LSP, LCP1, LCP2, LEP)), CurveBlendL);  // Luminace
 
-	if(curveScreenBlend)
-	return BlendScreenHDR(Color, Luma + (Chroma - chromaShift)) * 0.57; // 0.57 here since screenBlend Darkens the image a lil
+	if(chromaMode)
+    return saturate(Luma + (Color - chromaShift));
 
-	if(!curveScreenBlend)
-    return saturate(Luma + (Chroma - chromaShift));
+	if(!chromaMode)
+	return saturate(Color - GetLuma(Color, Rec709) + Luma);
 }

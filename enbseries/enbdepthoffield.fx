@@ -70,9 +70,9 @@ Texture2D		RenderTargetRGB32F; 	//32 bit hdr format without alpha
     #define fADOF_RenderResolutionMult lerp(0.5, 1.0, QualityBool)
     #define fADOF_BokehIntensity (fADOF_BokehIntensity_int * 0.01)
     #define fADOF_ShapeRadius lerp((fADOF_ShapeRadius_set * 1.25), (fADOF_ShapeRadius_set * 0.75), (fApterture * 0.357))
-    #define iADOF_ShapeVertices 8
+    #define iADOF_ShapeVertices 6
     #define iADOF_ShapeQuality lerp(3, 5, QualityBool)
-    #define fADOF_ShapeCurvatureAmount 0.15
+    #define fADOF_ShapeCurvatureAmount 1.0
     #define fADOF_ShapeRotation 66
     #define fADOF_ShapeAnamorphRatio 1.0
     #define fADOF_SmootheningAmount 0

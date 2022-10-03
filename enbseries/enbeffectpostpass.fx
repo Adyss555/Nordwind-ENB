@@ -95,7 +95,7 @@ UI_WHITESPACE(9)
 UI_MESSAGE(6,                       "| Curve Settings:")
 UI_BOOL(showCurveGraph,             "|  Show Curve Graph",          false)
 UI_INT(grapthSize,               	"|  Graph Box Size",            128.0, 1024.0, 512.0)
-UI_BOOL(curveScreenBlend,           "|  Screen Blend Curves",      	false)
+UI_BOOL(chromaMode,                 "|  Chroma mode",          		false)
 UI_FLOAT(chromaShift,               "|  Shift Chroma range",        0.0, 1.0, 0.1)
 UI_WHITESPACE(10)
 UI_MESSAGE(7,                       "| Luminance Curve:")
@@ -163,7 +163,7 @@ float3 PS_Color(VS_OUTPUT IN) : SV_Target
 		   Color	= colorIso(Color);
 		   Color 	= curveCombine(Color);
 		   Color 	= lerp(Color, Color * Color * Color * (Color * (Color * 6.0 - 15.0) + 10.0), contrast); // Smootherstep curve
-           Color 	= ACESFilm(Color); // Shadersin. But it looks so gud i just cant...
+           Color 	= ACESFilm(Color * 1.2); // Shadersin. But it looks so gud i just cant...
            Color    = ldexp(Color, exposure);
 		   Color 	= pow(((Color) - inputBlackPoint) / (inputWhitePoint - inputBlackPoint) , inputGamma) * (outputWhitePoint - outputBlackPoint) + outputBlackPoint; // Levels
 
@@ -176,8 +176,8 @@ float3 PS_Color(VS_OUTPUT IN) : SV_Target
 
 float4 PS_PostFX(VS_OUTPUT IN, float4 v0 : SV_Position0) : SV_Target
 {
-    float2 coord    = IN.txcoord.xy;
-    float4 Color    = TextureColor.Sample(PointSampler, coord);
+    float2 coord 	= IN.txcoord.xy;
+    float4 Color	= TextureColor.Sample(PointSampler, coord);
 
     // Grain
     if(enableGrain)
@@ -205,13 +205,12 @@ float4 PS_PostFX(VS_OUTPUT IN, float4 v0 : SV_Position0) : SV_Target
 		graphDraw(g, Color);
 	}
 
-
     return Color;
 }
 
 float3 PS_LensDistortion(VS_OUTPUT IN) : SV_Target
 {
-    return LensDist(IN.txcoord.xy);
+    return enableDistortion ? LensDist(IN.txcoord.xy) : TextureColor.Sample(PointSampler, IN.txcoord.xy);
 }
 
 float3 PS_LensCABlur(VS_OUTPUT IN) : SV_Target
@@ -247,7 +246,7 @@ technique11 post1
 	pass p0
 	{
 		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_LensDistortion()));
+		SetPixelShader (CompileShader(ps_5_0, PS_CAS()));
 	}
 }
 
@@ -256,7 +255,7 @@ technique11 post2
 	pass p0
 	{
 		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_LensCABlur()));
+		SetPixelShader (CompileShader(ps_5_0, PS_LensDistortion()));
 	}
 }
 
@@ -265,7 +264,7 @@ technique11 post3
 	pass p0
 	{
 		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_LensCA()));
+		SetPixelShader (CompileShader(ps_5_0, PS_LensCABlur()));
 	}
 }
 
@@ -274,7 +273,7 @@ technique11 post4
 	pass p0
 	{
 		SetVertexShader(CompileShader(vs_5_0, VS_Draw()));
-		SetPixelShader (CompileShader(ps_5_0, PS_CAS()));
+		SetPixelShader (CompileShader(ps_5_0, PS_LensCA()));
 	}
 }
 

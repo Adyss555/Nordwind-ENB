@@ -22,7 +22,6 @@ float4 Spectrum[7] =
 
 float3 LensDist(float2 texcoord)
 {
-    if(!enableDistortion) return TextureColor.Sample(PointSampler, texcoord.xy);
     float4 coord=0.0;
     coord.xy=texcoord;
     coord.w=0.0;
@@ -46,7 +45,6 @@ float3 LensDist(float2 texcoord)
 
 float3 SampleBlurredImage(float3 Original, float2 coord)
 {
-    float  Mask      = 0.5 + 0.5 * pow(16.0 * coord.x * coord.y * (1.0 - coord.x) * (1.0-coord.y), 2.0);
     float2 pixelSize = float2(1, ScreenSize.z);
     float2 Offset    = (coord - 0.5) * pixelSize;       //length to center
            Offset    = Distortion(Offset, barrelPower) / pixelSize * RadialCA * 0.1;

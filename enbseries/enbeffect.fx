@@ -95,8 +95,6 @@ UI_SEPARATOR
 UI_BOOL(showBloom,                  " Show Bloom Texture",      false)
 UI_BOOL(showLens,                   " Show Lens Texture",       false)
 UI_BOOL(showAdapt,                  " Show Adaptation Level",   false)
-UI_BOOL(altMixMode,                 " Alternate Bloom Mixing",  false)
-
 
 //==================================================//
 // Functions                                        //

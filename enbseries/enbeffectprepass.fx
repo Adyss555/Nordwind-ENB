@@ -18,7 +18,7 @@
 // TreyM: some helper functions and genral Advice   //
 //==================================================//
 
-static const float scale = 2.0; // Size of blur used in many effects in this file. Range 0.0 - 3.0
+static const float scale = 2.0; // Size of blur used for HDR and Fog shader. Range 0.0 - 3.0
 
 //==================================================//
 // Textures                                         //
@@ -54,7 +54,6 @@ UI_FLOAT(LiftShadows,           "|  Lighten Shadows",           0.0, 1.0, 0.2)
 UI_FLOAT(hdrCurve,              "|  HDR Curve",                 0.0, 2.2, 1.0)
 UI_FLOAT(hdrMix,                "|  HDR Balance",               0.0, 1.0, 0.5)
 UI_FLOAT(hdrStrength,           "|  HDR Mix",                   0.0, 1.0, 0.0)
-UI_FLOAT(desatShadows,          "|  Desaturate Shadows",        0.0, 1.0, 0.0)
 UI_WHITESPACE(1)
 UI_MESSAGE(2,                   "|----- Atmosphere -----")
 UI_BOOL(enableAtmosphere,       "| Enable Atmosphere",          false)
@@ -141,7 +140,7 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
            skinColor    = skinColor * (0.5 + skinTint);
            color        = lerp(color, skinColor, skinned * enableSkinEdit);
 
-    // Calc Shadows and Hightlights and edit them
+    // HDR and shadowlifter
     float  Lo           = ShadowRange - saturate(min3(color));
            color        = lerp(color, lerp(color, max(color, ambient), Lo), LiftShadows);
     float  luma         = GetLuma(color, Rec709);
@@ -151,11 +150,6 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
     float3 contrast     = pow(color * hdrLuma, hdrCurve);
     float3 light        = pow(color / hdrLuma, hdrCurve);
            color        = lerp(color, max(lerp(light, contrast, hdrMix), 0.0), hdrStrength);
-    float  grey         = GetLuma(color, Rec709);
-           grey         = saturate(1.0 - grey);
-           grey        *= grey;
-           grey        *= grey;
-           color    	= lerp(color, luma, grey * desatShadows);
 
     // Atmosphere Shader by TreyM. Modified by Adyss
     float fogPlane      = (1 - saturate((depth - nearPlane) / (farPlane - nearPlane)));

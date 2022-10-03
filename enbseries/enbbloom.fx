@@ -46,7 +46,7 @@ Texture2D   lensDirt3           <string ResourceName="Include/Textures/lensdirt3
 // UI                                          //
 //=============================================//
 UI_MESSAGE(1,                   "----- Masking -----")
-UI_FLOAT(linearSlope,           " Linear Slope",            0.1, 5.0, 1.0)
+UI_FLOAT(linearSlope,           " Linear Input Slope",      0.1, 5.0, 1.0)
 UI_FLOAT(bloomSensitivity,      " Sensitivity",             0.1, 3.0, 1.0)
 UI_FLOAT(threshold,             " Threshold",               0.0, 1.0, 0.1)
 UI_FLOAT(softThreshold,         " Soft Threshold",          0.0, 1.0, 0.1)
