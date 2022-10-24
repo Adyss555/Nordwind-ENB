@@ -1,7 +1,0 @@
-1. Add a second sharpening shader in post that does a more fine sharpening. The Prepass one is very rough and there is a lot of blur happening in the shaders after that.
-2. Update FXAA 2 -> 3. I am doing this + SMAA to fully replace TAA of the game. TAA causes a lot of issues with shaders like dof flickering and other stuff. Also this will prob be faster for most peeps than using TAA
-3. Expand the "Shadow Blur" to behave a bit more like Treys Lens haze shader from CFL2. Basically, ill do a full rewrite.
-4. Rework the UI of some files to be more consistent. This might break some ini settings, tho.
-5. Edit the Film grain shader wich rn expects a log input but gets sRGB. This will make the Grain look even better.
-6. Finish my AdyBloom V7 and make a Nordwind exclusive version by removing some of the stuff we dont use. This means less options but more fps.
-7. Ill probably come up with even more stuff as i go
