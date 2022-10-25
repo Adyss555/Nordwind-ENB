@@ -62,7 +62,6 @@ UI_FLOAT3_DNI(RGBGamma,             " RGB Gamma",           0.5, 0.5, 0.5)
 UI_FLOAT_FINE_DNI(ColorTemperature, " Color Temperature",   1000.0, 30000.0, 7000.0, 50.0)
 UI_FLOAT_DNI(Desaturation,          " Desaturation",        0.0, 1.0, 0.0)
 UI_FLOAT_DNI(Resaturation,          " Resaturation",        0.0, 2.0, 0.0)
-UI_FLOAT_DNI(HueShift,              " Hue Shift",           0.0, 1.0, 1.0)
 UI_FLOAT(adaptImapct,               " Adaptation Impact",   0.0, 8.0, 1.0)
 UI_WHITESPACE(2)
 #define UI_CATEGORY Bloom
@@ -111,11 +110,6 @@ float3 fujiFLog(float3 color)
     return c * log10(a * color + b) + d;
 }
 
-float3 adyLOG(float3 x, float logGamma)
-{
-    return max(log(x + 1) / pow(x, 1 / logGamma), 0.001);
-}
-
 float3 ColorTemperatureToRGB(float temperatureInKelvins)
 {
 	float3 retColor;
@@ -158,11 +152,7 @@ float3 frostbyteTonemap(float3 Color, float agcc_saturation)
     float3 ictcp        = rgb2ictcp(Color);
     float  saturation   = pow(smoothstep(1.0, 1.0 - Desaturation, ictcp.x), 1.3);
            Color        = ictcp2rgb(ictcp * float3(1.0, saturation.xx));
-    float3 perChannel   = fujiFLog(Color);
-    float  peak         = max3(Color);
-           Color       *= rcp(peak + 1e-6);
-           Color       *= fujiFLog(Color);
-           Color        = lerp(Color, perChannel, HueShift);
+           Color        = fujiFLog(Color);
            Color        = rgb2ictcp(Color);
     float  satBoost     = Resaturation * smoothstep(1.0, 0.5, ictcp.x);
            Color.yz     = lerp(Color.yz, ictcp.yz * Color.x / max(1e-3, ictcp.x), satBoost);
@@ -214,7 +204,7 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
             Color       = lerp(Color, Luma * isTintCol, isTintUse);
             Color       = lerp(Color, isFadeCol, isFadeUse);
 
-    return saturate(Color + triDither(Color, coord, Timer.x, 16));
+    return saturate(Color + triDither(Color, coord, Timer.x, 16)) * 1.15;
 }
 
 //==================================================//

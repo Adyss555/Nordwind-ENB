@@ -62,20 +62,20 @@ Texture2D		RenderTargetRGB32F; 	//32 bit hdr format without alpha
 	UI_FLOAT(fADOF_ShapeChromaAmount,		"CA Amount",  				   -1.0, 1.0, 0.0)
 
     #define fADOF_AutofocusCenter float2(0.5, 0.5)
-    #define iADOF_AutofocusSamples 6
+    #define iADOF_AutofocusSamples 8
     #define fADOF_AutofocusRadius 0.2
-    #define fADOF_NearBlurCurve 10.0
-    #define fADOF_FarBlurCurve lerp(0.6, 2.7, (fApterture * 0.357))
-    #define fADOF_HyperFocus lerp(0.01, 0.12, (fApterture * 0.357))
+    #define fADOF_NearBlurCurve 8.0
+    #define fADOF_FarBlurCurve lerp(0.8, 2.7, (fApterture * 0.357))
+    #define fADOF_HyperFocus lerp(0.01, 0.14, (fApterture * 0.357))
     #define fADOF_RenderResolutionMult lerp(0.5, 1.0, QualityBool)
     #define fADOF_BokehIntensity (fADOF_BokehIntensity_int * 0.01)
     #define fADOF_ShapeRadius lerp((fADOF_ShapeRadius_set * 1.25), (fADOF_ShapeRadius_set * 0.75), (fApterture * 0.357))
     #define iADOF_ShapeVertices 6
     #define iADOF_ShapeQuality lerp(3, 5, QualityBool)
-    #define fADOF_ShapeCurvatureAmount 1.0
+    #define fADOF_ShapeCurvatureAmount 2.0
     #define fADOF_ShapeRotation 66
     #define fADOF_ShapeAnamorphRatio 1.0
-    #define fADOF_SmootheningAmount 0
+    #define fADOF_SmootheningAmount 1.0
 	#define iADOF_ShapeChromaMode 2
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

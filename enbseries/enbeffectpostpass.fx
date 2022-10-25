@@ -163,8 +163,8 @@ float3 PS_Color(VS_OUTPUT IN) : SV_Target
 		   Color	= colorIso(Color);
 		   Color 	= curveCombine(Color);
 		   Color 	= lerp(Color, Color * Color * Color * (Color * (Color * 6.0 - 15.0) + 10.0), contrast); // Smootherstep curve
-           Color 	= ACESFilm(Color * 1.2); // Shadersin. But it looks so gud i just cant...
-           Color    = ldexp(Color, exposure);
+           Color 	= ACESFilm(Color * 1.1); // Shadersin. But it looks so gud i just cant...
+           Color   *= exp(exposure);
 		   Color 	= pow(((Color) - inputBlackPoint) / (inputWhitePoint - inputBlackPoint) , inputGamma) * (outputWhitePoint - outputBlackPoint) + outputBlackPoint; // Levels
 
            // Apply Lut
