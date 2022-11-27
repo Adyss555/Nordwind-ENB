@@ -59,18 +59,17 @@ UI_SEPARATOR
 UI_FLOAT_DNI(Exposure,              " Exposure",            -3.0, 10.0, 0.0)
 UI_FLOAT_DNI(Gamma,                 " Gamma",               0.1, 3.0, 1.0)
 UI_FLOAT3_DNI(RGBGamma,             " RGB Gamma",           0.5, 0.5, 0.5)
-UI_FLOAT_FINE_DNI(ColorTemperature, " Color Temperature",   1000.0, 30000.0, 7000.0, 50.0)
+UI_FLOAT_FINE_DNI(colorTempK,       " Color Temperature",   1000.0, 30000.0, 7000.0, 20.0)
 UI_FLOAT_DNI(Desaturation,          " Desaturation",        0.0, 1.0, 0.0)
 UI_FLOAT_DNI(Resaturation,          " Resaturation",        0.0, 2.0, 0.0)
 UI_FLOAT(adaptImapct,               " Adaptation Impact",   0.0, 8.0, 1.0)
 UI_WHITESPACE(2)
 #define UI_CATEGORY Bloom
 UI_SEPARATOR
-UI_FLOAT(directBloomMix,            " Direct Bloom mix",    0.0, 1.0, 0.0)
-UI_FLOAT(lightSpreadThreshold,      " Bloom Spread Threshold", 0.0, 1.0, 0.0)
-UI_FLOAT(lightSpreadPower,          " Bloom Spread Power",  0.0, 1.0, 0.0)
-UI_FLOAT(glowThreshold,             " Bloom Glow Threshold",0.0, 1.0, 0.0)
-UI_FLOAT(glowPower,                 " Bloom Glow Power",    0.0, 1.0, 0.0)
+UI_FLOAT_DNI(bloomIntensity,        " Intensity",           0.0, 3.0, 0.5)
+UI_FLOAT_DNI(bloomDampening,        " Dampening",           0.0, 1.0, 0.5)
+UI_FLOAT_DNI(softBloomIntensity,    " Soft Bloom Intensity",0.0, 3.0, 1.0)
+UI_FLOAT_DNI(softBloomMix,          " Soft Bloom Mixing",   0.0, 1.0, 0.1)
 UI_WHITESPACE(3)
 #define UI_CATEGORY AISS
 UI_SEPARATOR
@@ -138,13 +137,14 @@ float3 ColorTemperatureToRGB(float temperatureInKelvins)
     return retColor;
 }
 
-float3 ChangeWhiteBalance(float3 Color, float Luma, float colorTempK)
+// Apply wb lumapreserving
+float3 whiteBalance(float3 color, float luma)
 {
-    float3 colorTempRGB      = ColorTemperatureToRGB(colorTempK);
-    float3 resultHSL         = RGBtoHSL(Color * colorTempRGB);
-	       Luma              = max(1e-6f, Luma);
-    return lerp(Color, HSLtoRGB(float3(resultHSL.x, resultHSL.y, Luma)), 0.75);
+    color /= luma;
+    color *= ColorTemperatureToRGB(colorTempK);
+    return color * luma;
 }
+
 
 // Frostbyte style tonemap by Sandvich http://enbseries.enbdev.com/forum/viewtopic.php?f=7&t=6239&sid=affec87216d29e0bd1a04bc515552bc6
 float3 frostbyteTonemap(float3 Color, float agcc_saturation)
@@ -172,12 +172,12 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
     float3  Lens         = TextureLens.Sample(LinearSampler, coord);
     float   Adapt        = TextureAdaptation.Load(int3(0, 0, 0));
 
-            // Mix Bloom and Lens
-            Color       = lerp(Color, Bloom, directBloomMix);
-            Bloom      += max(0.0, (Bloom.xyz - lightSpreadThreshold * 0.1) * lightSpreadPower * (1.0 - TextureBloom.Sample(LinearSampler, coord)));
-            Bloom      += max(0.0, (Bloom.xyz - glowThreshold * 0.1) * glowPower);
-            Color       = BlendScreenHDR(Color, Bloom * ENBParams01.x);
-            Color      += Lens * ENBParams01.y;    // Mix Lens
+            // Mix Bloom
+    float3  sBloom       = Lens * ENBParams01.x * softBloomIntensity;
+    float3  mBloom       = (Bloom * ENBParams01.x * bloomIntensity) + (Lens * softBloomMix); // Also mix a bit of soft bloom here
+    float3  bColor       = max(Color, mBloom + sBloom);
+            Color        = lerp(Color, sBloom, softBloomMix);
+            Color       += mBloom / (1 + lerp(Color, bColor, bloomDampening));
 
             //Debug
             if(showBloom) return Bloom;
@@ -199,7 +199,7 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
             Color       = frostbyteTonemap(Color, isSat);
             Color       = pow(Color, (Gamma - RGBGamma) + 0.5 + isCon);
     float   Luma        = saturate(GetLuma(Color, Rec709)); // saturate here cuz the WhiteBalance shader has issues with higher values than 1
-            Color       = saturate(ChangeWhiteBalance(Color, Luma, ColorTemperature));
+            Color       = whiteBalance(Color, Luma);
 
             Color       = lerp(Color, Luma * isTintCol, isTintUse);
             Color       = lerp(Color, isFadeCol, isFadeUse);
