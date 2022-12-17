@@ -49,6 +49,7 @@ UI_MESSAGE(1,                   "|--- Nordwind Natural Bloom ---")
 UI_WHITESPACE(2)
 UI_BOOL(bloomQuality,           "| High Quality",            false)
 UI_FLOAT_DNI(bloomIntensity,    "| Intensity",               0.1, 3.0, 1.0)
+UI_FLOAT_DNI(bloomThreshold,    "| Threshhold",              0.0, 1.0, 0.1)
 UI_FLOAT_DNI(bloomSensitivity,  "| Sensitivity",             0.1, 3.0, 1.0)
 UI_FLOAT_DNI(bloomSaturation,   "| Saturation",              0.1, 2.5, 1.0)
 UI_FLOAT_DNI(bloomShape,        "| Bloom Size",              0.0, 1.0, 0.1)
@@ -89,7 +90,10 @@ float4 simpleBlur(Texture2D inputTex, float2 coord, float2 pixelsize)
 float3	PS_Prepass(VS_OUTPUT IN, uniform Texture2D InputTex) : SV_Target
 {
     float3  color   = InputTex.Sample(LinearSampler, IN.txcoord.xy) * bloomIntensity;
-            color   = pow(color, bloomSensitivity);
+    float   bright  = max3(color);
+    float   mask    = max(0, bright - bloomThreshold);
+            mask   /= max(bright, 0.0001);
+            color   = pow(color * mask, bloomSensitivity);
             color   = lerp(GetLuma(color, Rec709), color, bloomSaturation);
             color   = lerp(color, color * (1 - floor(getLinearizedDepth(IN.txcoord.xy))), removeSky);
     return  clamp(color, 0.0, MAXBLOOM);

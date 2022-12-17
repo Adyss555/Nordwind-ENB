@@ -204,7 +204,7 @@ float3	PS_Color(VS_OUTPUT IN) : SV_Target
             Color       = lerp(Color, Luma * isTintCol, isTintUse);
             Color       = lerp(Color, isFadeCol, isFadeUse);
 
-    return saturate(Color + triDither(Color, coord, Timer.x, 16)) * 1.15;
+    return saturate(Color + triDither(Color, coord, Timer.x, 10)) * 1.15;
 }
 
 //==================================================//
