@@ -11,21 +11,20 @@ float3 PS_Sharpening(VS_OUTPUT IN) : SV_Target
 
     float3 Color   = TextureColor.Sample(PointSampler, coord.xy);
 
-    float3 Sharp   = TextureColor.Sample(PointSampler, North);
+    float3 Sharp   = Color;
+           Sharp  += TextureColor.Sample(PointSampler, North);
            Sharp  += TextureColor.Sample(PointSampler, South);
            Sharp  += TextureColor.Sample(PointSampler, West);
            Sharp  += TextureColor.Sample(PointSampler, East); // PointSampler looks sharper but youll have to fight aliasing
-           Sharp  *= 0.25;
+           Sharp  *= 0.2;
 
-    float  Skin           = floor(1 - TextureMask.Sample(LinearSampler, coord).a);
-    float  SharpeningMask = getEdges(TextureDepth, coord, PixelSize); // Remove Depth Edges from Sharpening to prevent aliasing
-           SharpeningMask = 1 - pow(SharpeningMask, 0.45) * 1 - smoothstep(0.0, SharpDistance * 0.025, getLinearizedDepth(coord));
+    float  Skin           = TextureMask.Sample(PointSampler, coord).a;
+    float  SharpeningMask = 1 - smoothstep(0.0, SharpDistance * 0.025, getLinearizedDepth(coord));
 
            if(ignoreSkin)
-           SharpeningMask = SharpeningMask * (1 - Skin);
+           SharpeningMask = SharpeningMask * Skin;
 
-    float  SharpLuma = dot(Color - Sharp, SharpeningStrength * 0.3333);
-           SharpLuma = max(SharpLuma / (1 + Color), 0); // Instead of Clamping it
+    float  SharpLuma = saturate(dot(Color - Sharp, SharpeningStrength * 0.3333));
 
-    return enableSharpening ? Color + SharpLuma * SharpeningMask : Color;
+    return enableSharpening ? Color + SharpLuma * SharpeningMask: Color;
 }
